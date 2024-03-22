@@ -6,19 +6,21 @@ interface IApp {
 }
 
 class App implements IApp {
-  //private body: HTMLElement;
+  private body: HTMLElement;
 
   constructor() {
-    /*     this.body = document.body;
+    this.body = document.body;
     this.body.classList.add('body');
-    this.body.addEventListener('loggedIn', () => this.body.append(new StartScreen().create()));
+    /*     this.body.addEventListener('loggedIn', () => this.body.append(new StartScreen().create()));
     this.body.addEventListener('loggedOut', () => this.body.append(new Login().createLoginScreen()));
-    this.body.addEventListener('start', () => this.body.append(new Main().create())); */
+    this.body.addEventListener('start', () => this.body.append(new Main().create()));  */
   }
 
   public start(): void {
-    //this.body.append(!Login.isOurUser() ? new Login().createLoginScreen() : new StartScreen().create());
+    //  this.body.append(!Login.isOurUser() ? new Login().createLoginScreen() : new StartScreen().create());
     console.log('Hi Async race!');
+    this.body.append(new StartScreen().create());
+    this.body.append(new Main().create());
   }
 }
 
