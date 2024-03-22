@@ -1,0 +1,18 @@
+@import url(normalize.css);
+@import "font";
+
+:root {
+  --btn-back: #f1e5d7;
+  --btn-back-hover: #c99b66;
+  --valid: #adff2f;
+  --error-border: #dd3c10;
+  --error-back: rgba(255, 235, 232, 0.8);
+  --input: #dddfe2;
+  --white: #ffffff;
+   --gray: #eff0f2;
+}
+
+.body {
+  font-size: 20px;
+  font-family: "Sensei", sans-serif;
+}
