@@ -1,0 +1,56 @@
+.winners-screen {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: none;
+  width: 100vw;
+  height: 100vh;
+  background-color: darkgoldenrod;
+  &_show {
+    display: block;
+  }
+}
+
+.winners {
+  position: relative;
+  padding: 45px 20px;
+  &-page {
+    &-header {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      gap: 50px;
+      &__item {
+        &:nth-child(2) {
+          margin-right: 19px;
+        }
+        &:nth-child(3) {
+          margin-right: 56px;
+        }
+        &:nth-child(4) {
+          margin-right: -26px;
+        }
+      }
+    }
+  }
+  &-controls {
+    position: absolute;
+    bottom: -80px;
+    &__prev {
+      margin-right: 15px;
+    }
+  }
+}
+
+.winner {
+  display: flex;
+  gap: 50px;
+  &__id {
+    margin-right: 60px;
+  }
+  &__car-img {
+    width: 50px;
+    height: 23px;
+    background-color: black;
+  }
+}

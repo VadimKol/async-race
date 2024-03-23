@@ -1,5 +1,5 @@
-import StartScreen from './startScreen/start';
-import Main from './main/main';
+import Garage from './garage/garage';
+import Winners from './winners/winners';
 
 interface IApp {
   start(): void;
@@ -17,10 +17,8 @@ class App implements IApp {
   }
 
   public start(): void {
-    //  this.body.append(!Login.isOurUser() ? new Login().createLoginScreen() : new StartScreen().create());
-    console.log('Hi Async race!');
-    this.body.append(new StartScreen().create());
-    this.body.append(new Main().create());
+    this.body.append(new Garage().create());
+    this.body.append(new Winners().create());
   }
 }
 
