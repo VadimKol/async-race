@@ -12,6 +12,13 @@ interface Car {
   id: number;
 }
 
+interface CarInput {
+  name: string;
+  color: string;
+}
+
+const MAX_CARS_ON_PAGE = 7;
+
 class Garage implements IGarage {
   private garageScreen: HTMLDivElement;
 
@@ -27,6 +34,14 @@ class Garage implements IGarage {
 
   private carsArr: Car[];
 
+  private asyncApi: AsyncAPI;
+
+  private lastPage: HTMLDivElement | null;
+
+  private lastPageId: number;
+
+  private totalCars: number;
+
   constructor() {
     this.garageScreen = document.createElement('div');
     this.header = document.createElement('header');
@@ -35,6 +50,10 @@ class Garage implements IGarage {
     this.controlPanel = document.createElement('div');
     this.garagePages = document.createElement('div');
     this.carsArr = [];
+    this.asyncApi = new AsyncAPI();
+    this.lastPage = null;
+    this.lastPageId = 1;
+    this.totalCars = 0;
   }
 
   public create(): HTMLDivElement {
@@ -81,6 +100,10 @@ class Garage implements IGarage {
     createColorBtn.value = '#ffffff';
 
     const createCarBtn = new Button('control-panel-create__crt').createButton('Create');
+    // createName это ссылка на объект в DOM, его не нужно снова получать внутри хэндлера!
+    createCarBtn.addEventListener('click', () =>
+      this.createCar({ name: createName.value, color: createColorBtn.value }, createName, createColorBtn),
+    );
 
     const updateBlock = document.createElement('div');
     updateBlock.classList.add('control-panel-update');
@@ -135,69 +158,91 @@ class Garage implements IGarage {
 
     this.garagePages.append(garageTitle);
     this.garagePages.append(garageControls);
+
     this.addPage();
+
+    const defaultPage = this.garagePages.querySelector('.garage-page');
+    if (defaultPage) defaultPage.classList.add('garage-page_show');
+    this.addDefaultCars();
   }
 
   private addPage() {
     const garagePage = document.createElement('div');
     garagePage.classList.add('garage-page');
+    garagePage.id = `gPage-${this.lastPageId}`;
 
     const garagePageTitle = document.createElement('h3');
     garagePageTitle.classList.add('garage-page__title');
-    garagePageTitle.append(`Page #${1}`);
+    garagePageTitle.append(`Page #${this.lastPageId}`);
 
     const cars = document.createElement('div');
     cars.classList.add('garage-page__cars');
 
-    this.addCar(cars);
-
     garagePage.append(garagePageTitle);
     garagePage.append(cars);
+
+    this.lastPageId += 1;
+    this.lastPage = cars;
 
     this.garagePages.append(garagePage);
   }
 
-  private async addCar(cars: HTMLDivElement) {
-    const asyncApi = new AsyncAPI();
-    this.carsArr = await asyncApi.getCars();
+  private async addDefaultCars() {
+    this.carsArr = await this.asyncApi.getCars();
 
     this.carsArr.forEach((el) => {
-      const car = document.createElement('div');
-      car.classList.add('car');
+      if (this.lastPage) {
+        this.totalCars += 1;
+        const title = this.garagePages.querySelector('.garage__title');
+        if (title) title.textContent = `Garage (${this.totalCars})`;
 
-      const carControls = document.createElement('div');
-      carControls.classList.add('car-controls');
-
-      const selectCarBtn = new Button('car-controls__select').createButton('Select');
-      const removeCarBtn = new Button('car-controls__remove').createButton('Remove');
-
-      const carName = document.createElement('p');
-      carName.classList.add('car-controls__name');
-      carName.append(el.name);
-
-      const track = document.createElement('div');
-      track.classList.add('track');
-
-      const startBtn = new Button('track__start').createButton('S');
-      const restartBtn = new Button('track__restart').createButton('R');
-
-      const finishImg = document.createElement('div');
-      finishImg.classList.add('track__finish');
-
-      track.append(startBtn);
-      track.append(restartBtn);
-      track.append(Garage.setCarImg(el.color));
-      track.append(finishImg);
-
-      carControls.append(selectCarBtn);
-      carControls.append(removeCarBtn);
-      carControls.append(carName);
-
-      car.append(carControls);
-      car.append(track);
-
-      cars.append(car);
+        if (this.lastPage.children.length < MAX_CARS_ON_PAGE) {
+          this.addCar({ name: el.name, color: el.color }, this.lastPage);
+        } else {
+          this.addPage();
+          this.addCar({ name: el.name, color: el.color }, this.lastPage);
+        }
+      }
     });
+  }
+
+  private addCar(el: CarInput, page: HTMLDivElement) {
+    const car = document.createElement('div');
+    car.classList.add('car');
+
+    const carControls = document.createElement('div');
+    carControls.classList.add('car-controls');
+
+    const selectCarBtn = new Button('car-controls__select').createButton('Select');
+    const removeCarBtn = new Button('car-controls__remove').createButton('Remove');
+    removeCarBtn.addEventListener('click', () => this.removeCar());
+
+    const carName = document.createElement('p');
+    carName.classList.add('car-controls__name');
+    carName.append(el.name);
+
+    const track = document.createElement('div');
+    track.classList.add('track');
+
+    const startBtn = new Button('track__start').createButton('S');
+    const restartBtn = new Button('track__restart').createButton('R');
+
+    const finishImg = document.createElement('div');
+    finishImg.classList.add('track__finish');
+
+    track.append(startBtn);
+    track.append(restartBtn);
+    track.append(Garage.setCarImg(el.color));
+    track.append(finishImg);
+
+    carControls.append(selectCarBtn);
+    carControls.append(removeCarBtn);
+    carControls.append(carName);
+
+    car.append(carControls);
+    car.append(track);
+
+    page.append(car);
   }
 
   private static setCarImg(carColor: string): SVGSVGElement {
@@ -222,6 +267,30 @@ class Garage implements IGarage {
     });
 
     return carImg;
+  }
+
+  private async createCar(car: CarInput, createName: HTMLInputElement, createColorBtn: HTMLInputElement) {
+    if (await this.asyncApi.createCar(car)) {
+      const carName = createName;
+      const carColor = createColorBtn;
+      carName.value = '';
+      carColor.value = '#ffffff';
+      if (this.lastPage) {
+        this.totalCars += 1;
+        const title = this.garagePages.querySelector('.garage__title');
+        if (title) title.textContent = `Garage (${this.totalCars})`;
+
+        if (this.lastPage.children.length < MAX_CARS_ON_PAGE) this.addCar(car, this.lastPage);
+        else {
+          this.addPage();
+          this.addCar(car, this.lastPage);
+        }
+      }
+    }
+  }
+
+  private async removeCar() {
+    return this.lastPage;
   }
 
   private static toGarage() {

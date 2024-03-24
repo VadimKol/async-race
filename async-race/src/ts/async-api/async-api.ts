@@ -4,11 +4,19 @@ interface Car {
   id: number;
 }
 
+interface CarInput {
+  name: string;
+  color: string;
+}
+
 class AsyncAPI {
   private cars: Car[];
 
+  private isCreated: boolean;
+
   constructor() {
     this.cars = [];
+    this.isCreated = false;
   }
 
   public async getCars() {
@@ -23,6 +31,22 @@ class AsyncAPI {
     } */
 
     return this.cars;
+  }
+
+  public async createCar(car: CarInput) {
+    this.isCreated = false;
+
+    const response = await fetch('http://127.0.0.1:3000/garage', {
+      method: 'POST',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(car),
+    });
+
+    if (!(response.status === 201)) throw new Error('Response was not OK');
+    else this.isCreated = true;
+
+    return this.isCreated;
   }
 }
 

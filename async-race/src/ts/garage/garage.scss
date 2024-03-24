@@ -21,6 +21,12 @@
       margin-right: 15px;
     }
   }
+  &-page {
+    display: none;
+    &_show {
+      display: block;
+    }
+  }
 }
 
 .nav {
