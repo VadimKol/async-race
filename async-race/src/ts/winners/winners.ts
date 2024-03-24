@@ -1,11 +1,7 @@
 import './winners.scss';
 import Button from '../components/button/button';
 
-interface IWinners {
-  create(): HTMLDivElement;
-}
-
-class Winners implements IWinners {
+class Winners {
   private winnersScreen: HTMLDivElement;
 
   private header: HTMLElement;

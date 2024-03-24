@@ -2,10 +2,6 @@ import './garage.scss';
 import Button from '../components/button/button';
 import AsyncAPI from '../async-api/async-api';
 
-interface IGarage {
-  create(): HTMLDivElement;
-}
-
 interface Car {
   name: string;
   color: string;
@@ -19,7 +15,7 @@ interface CarInput {
 
 const MAX_CARS_ON_PAGE = 7;
 
-class Garage implements IGarage {
+class Garage {
   private garageScreen: HTMLDivElement;
 
   private header: HTMLElement;

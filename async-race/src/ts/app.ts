@@ -1,11 +1,7 @@
 import Garage from './garage/garage';
 import Winners from './winners/winners';
 
-interface IApp {
-  start(): void;
-}
-
-class App implements IApp {
+class App {
   private body: HTMLElement;
 
   constructor() {
