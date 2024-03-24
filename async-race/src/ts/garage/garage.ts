@@ -74,7 +74,12 @@ class Garage implements IGarage {
     const createName = document.createElement('input');
     createName.classList.add('control-panel-create__name');
     createName.type = 'text';
-    const createColorBtn = new Button('control-panel-create__color').createButton();
+
+    const createColorBtn = document.createElement('input');
+    createColorBtn.classList.add('control-panel-create__color');
+    createColorBtn.type = 'color';
+    createColorBtn.value = '#ffffff';
+
     const createCarBtn = new Button('control-panel-create__crt').createButton('Create');
 
     const updateBlock = document.createElement('div');
@@ -83,7 +88,12 @@ class Garage implements IGarage {
     const updateName = document.createElement('input');
     updateName.classList.add('control-panel-update__name');
     updateName.type = 'text';
-    const updateColorBtn = new Button('control-panel-update__color').createButton();
+
+    const updateColorBtn = document.createElement('input');
+    updateColorBtn.classList.add('control-panel-update__color');
+    updateColorBtn.type = 'color';
+    updateColorBtn.value = '#ffffff';
+
     const updateCarBtn = new Button('control-panel-update__upt').createButton('Update');
 
     const functionalBlock = document.createElement('div');

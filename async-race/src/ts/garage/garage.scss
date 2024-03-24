@@ -72,7 +72,7 @@
 }
 
 .control-panel {
-  max-width: 400px;
+  max-width: 430px;
   &-create,
   &-update {
     margin-bottom: 20px;
@@ -82,6 +82,17 @@
     &__name {
       width: 250px;
       height: 29px;
+    }
+    &__color {
+      padding: 4.5px 8px;
+      box-sizing: content-box;
+      border-radius: 6px;
+      border: none;
+      @media (hover: hover) {
+        &:hover {
+            cursor: pointer;
+        }
+      }
     }
   }
   &-functional {
