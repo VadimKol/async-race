@@ -13,6 +13,11 @@
 }
 
 .body {
-  font-size: 16px;
+  font-size: 14px;
   font-family: "Sensei", sans-serif;
+  background-color: darkgoldenrod;
+}
+
+.body_overflow {
+  overflow: hidden;
 }

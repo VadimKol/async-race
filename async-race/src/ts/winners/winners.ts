@@ -159,10 +159,12 @@ class Winners implements IWinners {
   }
 
   private toGarage() {
+    document.body.classList.remove('body_overflow');
     this.winnersScreen.classList.remove('winners-screen_show');
   }
 
   private toWinners() {
+    document.body.classList.add('body_overflow');
     this.winnersScreen.classList.add('winners-screen_show');
   }
 }

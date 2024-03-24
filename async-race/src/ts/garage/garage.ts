@@ -1,8 +1,15 @@
 import './garage.scss';
 import Button from '../components/button/button';
+import AsyncAPI from '../async-api/async-api';
 
 interface IGarage {
   create(): HTMLDivElement;
+}
+
+interface Car {
+  name: string;
+  color: string;
+  id: number;
 }
 
 class Garage implements IGarage {
@@ -18,6 +25,8 @@ class Garage implements IGarage {
 
   private garagePages: HTMLDivElement;
 
+  private carsArr: Car[];
+
   constructor() {
     this.garageScreen = document.createElement('div');
     this.header = document.createElement('header');
@@ -25,6 +34,7 @@ class Garage implements IGarage {
     this.nav = document.createElement('nav');
     this.controlPanel = document.createElement('div');
     this.garagePages = document.createElement('div');
+    this.carsArr = [];
   }
 
   public create(): HTMLDivElement {
@@ -129,7 +139,7 @@ class Garage implements IGarage {
     const cars = document.createElement('div');
     cars.classList.add('garage-page__cars');
 
-    Garage.addCar(cars);
+    this.addCar(cars);
 
     garagePage.append(garagePageTitle);
     garagePage.append(cars);
@@ -137,50 +147,56 @@ class Garage implements IGarage {
     this.garagePages.append(garagePage);
   }
 
-  private static addCar(cars: HTMLDivElement) {
-    const car = document.createElement('div');
-    car.classList.add('car');
+  private async addCar(cars: HTMLDivElement) {
+    const asyncApi = new AsyncAPI();
+    this.carsArr = await asyncApi.getCars();
 
-    const carControls = document.createElement('div');
-    carControls.classList.add('car-controls');
+    this.carsArr.forEach((el) => {
+      const car = document.createElement('div');
+      car.classList.add('car');
 
-    const selectCarBtn = new Button('car-controls__select').createButton('Select');
-    const removeCarBtn = new Button('car-controls__remove').createButton('Remove');
+      const carControls = document.createElement('div');
+      carControls.classList.add('car-controls');
 
-    const carName = document.createElement('p');
-    carName.classList.add('car-controls__name');
-    carName.append(`${'Lada'} ${'Granta'}`);
+      const selectCarBtn = new Button('car-controls__select').createButton('Select');
+      const removeCarBtn = new Button('car-controls__remove').createButton('Remove');
 
-    const track = document.createElement('div');
-    track.classList.add('track');
+      const carName = document.createElement('p');
+      carName.classList.add('car-controls__name');
+      carName.append(el.name);
 
-    const startBtn = new Button('track__start').createButton('S');
-    const restartBtn = new Button('track__restart').createButton('R');
+      const track = document.createElement('div');
+      track.classList.add('track');
 
-    const finishImg = document.createElement('div');
-    finishImg.classList.add('track__finish');
+      const startBtn = new Button('track__start').createButton('S');
+      const restartBtn = new Button('track__restart').createButton('R');
 
-    track.append(startBtn);
-    track.append(restartBtn);
-    track.append(Garage.setCarImg());
-    track.append(finishImg);
+      const finishImg = document.createElement('div');
+      finishImg.classList.add('track__finish');
 
-    carControls.append(selectCarBtn);
-    carControls.append(removeCarBtn);
-    carControls.append(carName);
+      track.append(startBtn);
+      track.append(restartBtn);
+      track.append(Garage.setCarImg(el.color));
+      track.append(finishImg);
 
-    car.append(carControls);
-    car.append(track);
+      carControls.append(selectCarBtn);
+      carControls.append(removeCarBtn);
+      carControls.append(carName);
 
-    cars.append(car);
+      car.append(carControls);
+      car.append(track);
+
+      cars.append(car);
+    });
   }
 
-  private static setCarImg(): SVGSVGElement {
+  private static setCarImg(carColor: string): SVGSVGElement {
     const carImg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     carImg.classList.add('track__car-img');
     carImg.setAttributeNS(null, 'viewBox', `0 0 1280 640`);
     carImg.setAttributeNS(null, 'width', `1706.667`);
     carImg.setAttributeNS(null, 'height', `853.333`);
+    carImg.setAttributeNS(null, 'fill', carColor);
 
     const paths = [
       'M356.5 106.4c-10.6 3-10.1 2.6-10.8 11.1-.4 4.2-.9 8-1.2 8.5-.6 1-24.6 10.5-59 23.4-44.8 16.7-105.2 41.5-117.3 48.3-7.8 4.3-19.3 9.1-25 10.4-2.3.5-9.8 1.4-16.5 1.9-6.7.6-16.7 1.9-22.2 3-15.4 3.1-34 4.9-56.3 5.7l-20.3.6-4.3 6.6c-5.9 9.1-6 9.5-2.6 13 3.7 3.7 3.8 6.5.3 15-2.5 6.2-2.7 7.8-3.1 25.6l-.4 19-3.8 3.2C4.9 309.5.7 322.6.6 343.5c0 19.4 1.1 39.6 2.6 48.2 1.3 7.1 1.4 7.4 7.2 12.2 6.9 5.8 13 12.9 15.8 18.4 6.4 12.6 53.4 21.1 138.4 25l9.2.4-.6-11.9c-.6-14.2.8-25.6 4.9-38.3 11.2-35.2 39.4-62.2 75.6-72.2 9-2.6 11.2-2.8 27.8-2.8 16.5 0 18.8.2 27.8 2.7 20.1 5.6 36.1 15.2 50.4 30.2 14 14.5 22.2 29.3 27.4 49.2 2.1 7.9 2.4 10.9 2.3 27.9-.1 12.7-.6 21.4-1.6 26.3l-1.5 7.3 300.6-.7c165.3-.4 300.7-.8 300.9-.9.1-.1-.8-3.7-2-8.1-1.9-6.7-2.2-10.5-2.2-25.9-.1-16.6.1-18.7 2.7-27.9 11.7-42.1 46.7-73.6 88.5-79.7 11.9-1.7 32.5-.7 43.2 2.1 23.9 6.3 45.3 20.5 60.1 39.9 7 9.2 15.4 26.7 18.5 38.6 2.4 8.8 2.7 11.9 2.7 26 .1 11.6-.4 18.1-1.6 23.4-1 4.1-1.6 7.5-1.5 7.6.2.1 6.2-.2 13.3-.6 26.6-1.6 45.8-4.5 52.5-7.9 4.8-2.4 9.7-8.1 12.7-14.6l2.4-5.2-1.6-15.7c-1.5-15.2-1.5-16.3.4-28.4 6.3-38.8 5-68-3.5-80.2-13.4-19.3-52.6-33.6-142.9-51.9-73.7-14.9-132.2-20.9-203.3-21-22.8 0-22.6 0-34.7-8.5-18.7-13.1-104.5-60.7-147.1-81.5-38.3-18.7-78.8-28.1-143.9-33.2-20.8-1.7-110.6-1.6-140 0-12.1.7-31.4 1.9-43 2.7-30.2 2.2-28.6 2.2-34.1-1-14-8.1-18.7-9.4-26.9-7.1zM545 139.7c.6 3.7 3.8 23.8 7.1 44.6 3.2 20.9 6.6 42.2 7.5 47.4.9 5.2 1.5 9.6 1.3 9.7-1.1.9-169.9-2.9-195.1-4.4-20.6-1.3-41.7-3.6-48.5-5.4-9.8-2.6-19.8-11.9-24.9-23.1-3.5-7.5-3.6-17.2-.5-25.5 1.7-4.5 3-6.1 6.8-8.6 8.3-5.4 13.5-8 25.3-12.7 34.1-13.6 85.8-23 146-26.7 26.9-1.6 27-1.6 51.1-1.8l22.7-.2 1.2 6.7zm63-4.7c26.4 1.8 77.7 11 102.9 18.6 18.6 5.6 44.5 18.8 75.6 38.7 21.1 13.4 27.4 18.1 25 18.5-7.5 1.2-13.3 5-16.2 10.6-1.9 3.5-2.1 13.6-.4 17.9l1.1 2.7-90.7-.2-90.6-.3-5.9-16c-11-30.2-29.8-87.8-29.8-91.6 0-.6 9.5-.2 29 1.1z',
@@ -200,12 +216,18 @@ class Garage implements IGarage {
 
   private static toGarage() {
     const winners = document.querySelector('.winners-screen');
-    if (winners) winners.classList.remove('winners-screen_show');
+    if (winners) {
+      document.body.classList.remove('body_overflow');
+      winners.classList.remove('winners-screen_show');
+    }
   }
 
   private static toWinners() {
     const winners = document.querySelector('.winners-screen');
-    if (winners) winners.classList.add('winners-screen_show');
+    if (winners) {
+      document.body.classList.add('body_overflow');
+      winners.classList.add('winners-screen_show');
+    }
   }
 }
 

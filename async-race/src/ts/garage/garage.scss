@@ -1,17 +1,14 @@
-.garage-screen {
-  width: 100vw;
-  height: 100vh;
-  background-color: darkgoldenrod;
+// .garage-screen {
 /*   background-image: url(../../assets/img/main.jpg);
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center; */
-}
+// }
 
 .header {
   position: relative;
   box-sizing: border-box;
-  padding: 45px 20px;
+  padding: 45px 20px 0;
 }
 
 .garage {
@@ -33,15 +30,19 @@
 }
 
 .main {
-  padding: 45px 20px;
+  padding: 45px 20px 115px;
 }
 
 .car {
+  margin-bottom: 10px;
   &-controls {
     display: flex;
     gap: 15px;
-    margin-bottom: 20px;
     align-items: center;
+    &__name {
+      font-size: 20px;
+      margin: 0;
+    }
   }
 }
 
@@ -85,6 +86,6 @@
   }
   &-functional {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
   }
 }
