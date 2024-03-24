@@ -41,6 +41,7 @@
     display: flex;
     gap: 15px;
     margin-bottom: 20px;
+    align-items: center;
   }
 }
 
@@ -48,6 +49,7 @@
   position: relative;
   display: flex;
   gap: 15px;
+  align-items: center;
   border-bottom: 2px dashed white;
   padding-bottom: 20px;
   &__car-img {
@@ -56,7 +58,6 @@
     width: 100px;
     height: 50px;
     display: block;
-    //background-color: black;
   }
   &__finish {
     position: absolute;
@@ -64,14 +65,13 @@
     bottom: 0;
     width: 50px;
     height: 50px;
-    //background-color: #ff0000;
     background-image: url(../../assets/img/finish.svg);
     background-size: cover;
   }
 }
 
 .control-panel {
-  max-width: 430px;
+  max-width: 400px;
   &-create,
   &-update {
     margin-bottom: 20px;

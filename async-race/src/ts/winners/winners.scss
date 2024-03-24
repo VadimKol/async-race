@@ -22,13 +22,13 @@
       gap: 50px;
       &__item {
         &:nth-child(2) {
-          margin-right: 19px;
+          margin-right: 23px;
         }
         &:nth-child(3) {
-          margin-right: 56px;
+          margin-right: 45px;
         }
         &:nth-child(4) {
-          margin-right: -26px;
+          margin-right: -22px;
         }
       }
     }
@@ -46,11 +46,10 @@
   display: flex;
   gap: 50px;
   &__id {
-    margin-right: 60px;
+    margin-right: 46px;
   }
   &__car-img {
     width: 50px;
     height: 23px;
-    background-color: black;
   }
 }
