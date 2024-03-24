@@ -52,11 +52,11 @@
   padding-bottom: 20px;
   &__car-img {
     position: relative;
-    top: 20px;
+    top: 29px;
     width: 100px;
     height: 50px;
     display: block;
-    background-color: black;
+    //background-color: black;
   }
   &__finish {
     position: absolute;
@@ -64,7 +64,9 @@
     bottom: 0;
     width: 50px;
     height: 50px;
-    background-color: red;
+    //background-color: #ff0000;
+    background-image: url(../../assets/img/finish.svg);
+    background-size: cover;
   }
 }
 
