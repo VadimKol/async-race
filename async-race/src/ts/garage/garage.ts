@@ -148,6 +148,8 @@ class Garage {
 
     const prevPageBtn = new Button('garage-controls__prev').createButton('<-');
     const nextPageBtn = new Button('garage-controls__next').createButton('->');
+    prevPageBtn.addEventListener('click', () => this.movePage(false));
+    nextPageBtn.addEventListener('click', () => this.movePage(true));
 
     garageControls.append(prevPageBtn);
     garageControls.append(nextPageBtn);
@@ -181,6 +183,20 @@ class Garage {
     this.lastPage = cars;
 
     this.garagePages.append(garagePage);
+  }
+
+  private movePage(sign: boolean): void {
+    const currentPage = this.garagePages.querySelector('.garage-page_show');
+    if (currentPage) {
+      const currentPageId = currentPage.id;
+      const [idName, idNumber] = currentPageId.split('-');
+      const newPageId = sign ? Number(idNumber) + 1 : Number(idNumber) - 1;
+      const newPage = document.getElementById(`${idName}-${newPageId}`);
+      if (newPage) {
+        currentPage.classList.remove('garage-page_show');
+        newPage.classList.add('garage-page_show');
+      }
+    }
   }
 
   private async addDefaultCars() {

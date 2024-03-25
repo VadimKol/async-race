@@ -1,10 +1,6 @@
 import './button.scss';
 
-interface IButton {
-  createButton(name?: string): HTMLButtonElement;
-}
-
-class Button implements IButton {
+class Button {
   private btn: HTMLButtonElement;
 
   constructor(className: string) {
