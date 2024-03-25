@@ -14,16 +14,19 @@ class AsyncAPI {
 
   private isCreated: boolean;
 
+  private isDeleted: boolean;
+
   constructor() {
     this.cars = [];
     this.isCreated = false;
+    this.isDeleted = false;
   }
 
   public async getCars() {
     // try {
     const response = await fetch('http://127.0.0.1:3000/garage', { method: 'GET', cache: 'no-store' });
 
-    if (!response.ok) throw new Error('Response was not OK');
+    if (!(response.status === 200)) throw new Error('Response was not OK');
 
     this.cars = await response.json();
     /*     } catch (e) {
@@ -44,9 +47,26 @@ class AsyncAPI {
     });
 
     if (!(response.status === 201)) throw new Error('Response was not OK');
-    else this.isCreated = true;
 
-    return this.isCreated;
+    const newCar: Car = await response.json();
+    this.isCreated = true;
+
+    return { isCreated: this.isCreated, carId: newCar.id };
+  }
+
+  public async deleteCar(carId: string) {
+    this.isDeleted = false;
+
+    const response = await fetch(`http://127.0.0.1:3000/garage/${carId}`, {
+      method: 'DELETE',
+      cache: 'no-store',
+    });
+
+    if (!(response.status === 200)) throw new Error('Response was not OK');
+
+    this.isDeleted = true;
+
+    return this.isDeleted;
   }
 }
 

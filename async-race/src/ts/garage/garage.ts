@@ -59,6 +59,7 @@ class Garage {
     this.nav.classList.add('nav');
     this.controlPanel.classList.add('control-panel');
     this.garagePages.classList.add('garage');
+    this.garagePages.addEventListener('click', (event) => this.whichButton(event));
 
     const toGarageBtn = new Button('nav__garage').createButton('To Garage');
     const toWinnersBtn = new Button('nav__winners').createButton('To Winners');
@@ -209,25 +210,25 @@ class Garage {
         if (title) title.textContent = `Garage (${this.totalCars})`;
 
         if (this.lastPage.children.length < MAX_CARS_ON_PAGE) {
-          this.addCar({ name: el.name, color: el.color }, this.lastPage);
+          Garage.addCar(el, this.lastPage);
         } else {
           this.addPage();
-          this.addCar({ name: el.name, color: el.color }, this.lastPage);
+          Garage.addCar(el, this.lastPage);
         }
       }
     });
   }
 
-  private addCar(el: CarInput, page: HTMLDivElement) {
+  private static addCar(el: Car, page: HTMLDivElement) {
     const car = document.createElement('div');
     car.classList.add('car');
+    car.id = String(el.id);
 
     const carControls = document.createElement('div');
     carControls.classList.add('car-controls');
 
     const selectCarBtn = new Button('car-controls__select').createButton('Select');
     const removeCarBtn = new Button('car-controls__remove').createButton('Remove');
-    removeCarBtn.addEventListener('click', () => this.removeCar());
 
     const carName = document.createElement('p');
     carName.classList.add('car-controls__name');
@@ -282,26 +283,74 @@ class Garage {
   }
 
   private async createCar(car: CarInput, createName: HTMLInputElement, createColorBtn: HTMLInputElement) {
-    if (await this.asyncApi.createCar(car)) {
+    const newAsyncCar = await this.asyncApi.createCar(car);
+    if (newAsyncCar.isCreated) {
       const carName = createName;
       const carColor = createColorBtn;
       carName.value = '';
       carColor.value = '#ffffff';
-      if (this.lastPage) {
-        this.totalCars += 1;
-        const title = this.garagePages.querySelector('.garage__title');
-        if (title) title.textContent = `Garage (${this.totalCars})`;
 
-        if (this.lastPage.children.length < MAX_CARS_ON_PAGE) this.addCar(car, this.lastPage);
-        else {
+      const currentPage = this.garagePages.querySelector('.garage-page_show');
+      if (!currentPage) throw new Error('There is no current page');
+      const carsOnCurrentPage = currentPage.querySelector('.garage-page__cars');
+      if (!(carsOnCurrentPage instanceof HTMLDivElement)) throw new Error('There is no cars on current page');
+
+      const allCarsOnAllPages: HTMLDivElement[] = [];
+      this.garagePages.querySelectorAll('.garage-page').forEach((el) => {
+        const carsOnPage = el.querySelector('.garage-page__cars');
+        if (carsOnPage instanceof HTMLDivElement) allCarsOnAllPages.push(carsOnPage);
+      });
+      let areFullofCars = true;
+
+      const newCar: Car = { name: car.name, color: car.color, id: newAsyncCar.carId };
+      this.totalCars += 1;
+      const title = this.garagePages.querySelector('.garage__title');
+
+      if (title) title.textContent = `Garage (${this.totalCars})`;
+
+      // добавляем машину на текущую страницу
+      // если фулл, то по остатками на других
+      // если фулл, то на новую страницу
+      // можно добавлять просто в конец и убрать кучу кода = незнаю
+      if (carsOnCurrentPage.children.length < MAX_CARS_ON_PAGE) Garage.addCar(newCar, carsOnCurrentPage);
+      else {
+        allCarsOnAllPages.every((el) => {
+          if (el.children.length < MAX_CARS_ON_PAGE) {
+            Garage.addCar(newCar, el);
+            areFullofCars = false;
+            return areFullofCars;
+          }
+          return areFullofCars;
+        });
+        if (areFullofCars) {
           this.addPage();
-          this.addCar(car, this.lastPage);
+          if (this.lastPage) Garage.addCar(newCar, this.lastPage);
         }
       }
     }
   }
 
-  private async removeCar() {
+  private whichButton(event: MouseEvent): void {
+    const target: EventTarget | null = event.target;
+
+    if (!(target instanceof HTMLButtonElement)) return;
+
+    if (target.textContent === 'Remove') this.removeCar(target);
+  }
+
+  private async removeCar(removeButton: HTMLButtonElement) {
+    const parent = removeButton.parentElement;
+    if (parent) {
+      const currentCar = parent.parentElement;
+      if (currentCar) {
+        if (await this.asyncApi.deleteCar(currentCar.id)) {
+          this.totalCars -= 1;
+          const title = this.garagePages.querySelector('.garage__title');
+          if (title) title.textContent = `Garage (${this.totalCars})`;
+          currentCar.remove();
+        }
+      }
+    }
     return this.lastPage;
   }
 
