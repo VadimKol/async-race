@@ -331,7 +331,7 @@ class Garage {
   }
 
   private whichButton(event: MouseEvent): void {
-    const target: EventTarget | null = event.target;
+    const { target } = event;
 
     if (!(target instanceof HTMLButtonElement)) return;
 

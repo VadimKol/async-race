@@ -24,8 +24,6 @@
     },
     "rules": {
       "no-plusplus": "off",
-      "prefer-destructuring": "off",
-      "@typescript-eslint/prefer-destructuring": "error",
       "@typescript-eslint/no-explicit-any": "error"
     }
 }
