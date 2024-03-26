@@ -5,7 +5,7 @@
   display: none;
   width: 100vw;
   height: 100vh;
-  background-color: #b8860b;
+  background-color: var(--background);
   &_show {
     display: block;
   }

@@ -1,5 +1,5 @@
-import './garage.scss';
 import Button from '../components/button/button';
+import './garage.scss';
 import AsyncAPI from '../async-api/async-api';
 
 interface Car {
@@ -38,6 +38,8 @@ class Garage {
 
   private totalCars: number;
 
+  private selectedCar: number;
+
   constructor() {
     this.garageScreen = document.createElement('div');
     this.header = document.createElement('header');
@@ -50,6 +52,7 @@ class Garage {
     this.lastPage = null;
     this.lastPageId = 1;
     this.totalCars = 0;
+    this.selectedCar = 0;
   }
 
   public create(): HTMLDivElement {
@@ -115,6 +118,18 @@ class Garage {
     updateColorBtn.value = '#ffffff';
 
     const updateCarBtn = new Button('control-panel-update__upt').createButton('Update');
+    updateCarBtn.addEventListener('click', () =>
+      this.updateCar(
+        { name: updateName.value, color: updateColorBtn.value, id: this.selectedCar },
+        updateName,
+        updateColorBtn,
+        updateCarBtn,
+      ),
+    );
+
+    updateName.classList.add('control-panel-update__name_disabled');
+    updateColorBtn.classList.add('control-panel-update__color_disabled');
+    updateCarBtn.classList.add('control-panel-update__upt_disabled');
 
     const functionalBlock = document.createElement('div');
     functionalBlock.classList.add('control-panel-functional');
@@ -330,28 +345,102 @@ class Garage {
     }
   }
 
+  private async updateCar(
+    car: Car,
+    updateName: HTMLInputElement,
+    updateColorBtn: HTMLInputElement,
+    updateCarBtn: HTMLButtonElement,
+  ) {
+    if (await this.asyncApi.updateCar(car)) {
+      const carName = updateName;
+      const carColor = updateColorBtn;
+      carName.value = '';
+      carColor.value = '#ffffff';
+      this.selectedCar = 0;
+
+      updateName.classList.add('control-panel-update__name_disabled');
+      updateColorBtn.classList.add('control-panel-update__color_disabled');
+      updateCarBtn.classList.add('control-panel-update__upt_disabled');
+
+      const carObjectInDOM = document.getElementById(`${car.id}`);
+      if (carObjectInDOM) {
+        const carNameInDOM = carObjectInDOM.querySelector('.car-controls__name');
+        if (carNameInDOM) carNameInDOM.textContent = car.name;
+
+        const carImgInDOM = carObjectInDOM.querySelector('.track__car-img');
+        if (carImgInDOM) carImgInDOM.setAttributeNS(null, 'fill', car.color);
+      }
+    }
+  }
+
   private whichButton(event: MouseEvent): void {
     const { target } = event;
 
     if (!(target instanceof HTMLButtonElement)) return;
 
     if (target.textContent === 'Remove') this.removeCar(target);
+
+    if (target.textContent === 'Select') this.selectCar(target);
   }
 
   private async removeCar(removeButton: HTMLButtonElement) {
     const parent = removeButton.parentElement;
-    if (parent) {
-      const currentCar = parent.parentElement;
-      if (currentCar) {
-        if (await this.asyncApi.deleteCar(currentCar.id)) {
-          this.totalCars -= 1;
-          const title = this.garagePages.querySelector('.garage__title');
-          if (title) title.textContent = `Garage (${this.totalCars})`;
-          currentCar.remove();
+    if (!parent) return;
+
+    const currentCar = parent.parentElement;
+    if (!currentCar) return;
+
+    if (await this.asyncApi.deleteCar(currentCar.id)) {
+      this.totalCars -= 1;
+      const title = this.garagePages.querySelector('.garage__title');
+      if (title) title.textContent = `Garage (${this.totalCars})`;
+      currentCar.remove();
+
+      if (Number(currentCar.id) === this.selectedCar) {
+        this.selectedCar = 0;
+        const inputCarName = this.controlPanel.querySelector('.control-panel-update__name');
+        const inputCarColor = this.controlPanel.querySelector('.control-panel-update__color');
+        const buttonUpdateCar = this.controlPanel.querySelector('.control-panel-update__upt');
+        if (
+          inputCarName instanceof HTMLInputElement &&
+          inputCarColor instanceof HTMLInputElement &&
+          buttonUpdateCar instanceof HTMLButtonElement
+        ) {
+          inputCarName.classList.add('control-panel-update__name_disabled');
+          inputCarColor.classList.add('control-panel-update__color_disabled');
+          buttonUpdateCar.classList.add('control-panel-update__upt_disabled');
+
+          inputCarName.value = '';
+          inputCarColor.value = '#ffffff';
         }
       }
     }
-    return this.lastPage;
+  }
+
+  private async selectCar(selectButton: HTMLButtonElement) {
+    const parent = selectButton.parentElement;
+    if (!parent) return;
+
+    const currentCar = parent.parentElement;
+    if (!currentCar) return;
+
+    this.selectedCar = Number(currentCar.id);
+    const car = await this.asyncApi.getCar(currentCar.id);
+    const inputCarName = this.controlPanel.querySelector('.control-panel-update__name');
+    const inputCarColor = this.controlPanel.querySelector('.control-panel-update__color');
+    const buttonUpdateCar = this.controlPanel.querySelector('.control-panel-update__upt');
+    if (
+      inputCarName instanceof HTMLInputElement &&
+      inputCarColor instanceof HTMLInputElement &&
+      buttonUpdateCar instanceof HTMLButtonElement
+    ) {
+      inputCarName.classList.remove('control-panel-update__name_disabled');
+      inputCarColor.classList.remove('control-panel-update__color_disabled');
+      buttonUpdateCar.classList.remove('control-panel-update__upt_disabled');
+
+      inputCarName.value = car.name;
+      inputCarColor.value = car.color;
+    }
   }
 
   private static toGarage() {

@@ -12,14 +12,20 @@ interface CarInput {
 class AsyncAPI {
   private cars: Car[];
 
+  private car: Car;
+
   private isCreated: boolean;
 
   private isDeleted: boolean;
 
+  private isUpdated: boolean;
+
   constructor() {
     this.cars = [];
+    this.car = { name: '', color: '#ffffff', id: 0 };
     this.isCreated = false;
     this.isDeleted = false;
+    this.isUpdated = false;
   }
 
   public async getCars() {
@@ -34,6 +40,19 @@ class AsyncAPI {
     } */
 
     return this.cars;
+  }
+
+  public async getCar(carId: string) {
+    const response = await fetch(`http://127.0.0.1:3000/garage/${carId}`, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+
+    if (!(response.status === 200)) throw new Error('Response was not OK');
+
+    this.car = await response.json();
+
+    return this.car;
   }
 
   public async createCar(car: CarInput) {
@@ -67,6 +86,23 @@ class AsyncAPI {
     this.isDeleted = true;
 
     return this.isDeleted;
+  }
+
+  public async updateCar(car: Car) {
+    this.isUpdated = false;
+
+    const response = await fetch(`http://127.0.0.1:3000/garage/${car.id}`, {
+      method: 'PUT',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: car.name, color: car.color }),
+    });
+
+    if (!(response.status === 200)) throw new Error('Response was not OK');
+
+    this.isUpdated = true;
+
+    return this.isUpdated;
   }
 }
 

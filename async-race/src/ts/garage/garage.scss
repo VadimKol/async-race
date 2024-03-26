@@ -57,7 +57,7 @@
   display: flex;
   gap: 15px;
   align-items: center;
-  border-bottom: 2px dashed white;
+  border-bottom: 2px dashed var(--white);
   padding-bottom: 20px;
   &__car-img {
     position: relative;
@@ -88,7 +88,7 @@
     &__name {
       width: 250px;
       height: 29px;
-      border: none;
+      border: 1px solid var(--black);
     }
     &__color {
       padding: 4.5px 8px;
@@ -97,7 +97,7 @@
       border: none;
       @media (hover: hover) {
         &:hover {
-            cursor: pointer;
+          cursor: pointer;
         }
       }
     }
@@ -105,5 +105,16 @@
   &-functional {
     display: flex;
     justify-content: space-around;
+  }
+  &-update {
+    &__name,
+    &__color,
+    &__upt {
+      &_disabled {
+        pointer-events: none;
+        user-select: none;
+        background-color: var(--disabled);
+      }
+    }
   }
 }

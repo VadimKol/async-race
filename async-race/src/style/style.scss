@@ -2,20 +2,24 @@
 @import "font";
 
 :root {
-  --btn-back: #f1e5d7;
-  --btn-back-hover: #c99b66;
-  --valid: #adff2f;
+  /* --valid: #adff2f;
   --error-border: #dd3c10;
   --error-back: rgba(255, 235, 232, 0.8);
   --input: #dddfe2;
+  --gray: #eff0f2; */
+
+  --btn-back: #f1e5d7;
+  --btn-back-hover: #c99b66;
   --white: #ffffff;
-   --gray: #eff0f2;
+  --black: #000000;
+  --disabled: #dcdcdc;
+  --background: #b8860b;
 }
 
 .body {
   font-size: 14px;
   font-family: "Sensei", sans-serif;
-  background-color: darkgoldenrod;
+  background-color: var(--background);
 }
 
 .body_overflow {
