@@ -1,6 +1,7 @@
 import Button from '../components/button/button';
 import './garage.scss';
 import AsyncAPI from '../async-api/async-api';
+import Util from '../util/util';
 
 interface Car {
   name: string;
@@ -14,6 +15,7 @@ interface CarInput {
 }
 
 const MAX_CARS_ON_PAGE = 7;
+const GENERATE_CARS = 100;
 
 class Garage {
   private garageScreen: HTMLDivElement;
@@ -31,6 +33,8 @@ class Garage {
   private carsArr: Car[];
 
   private asyncApi: AsyncAPI;
+
+  private util: Util;
 
   private lastPage: HTMLDivElement | null;
 
@@ -53,6 +57,7 @@ class Garage {
     this.lastPageId = 1;
     this.totalCars = 0;
     this.selectedCar = 0;
+    this.util = new Util();
   }
 
   public create(): HTMLDivElement {
@@ -137,6 +142,7 @@ class Garage {
     const raceBtn = new Button('control-panel-functional__race').createButton('Race');
     const resetBtn = new Button('control-panel-functional__reset').createButton('Reset');
     const generateBtn = new Button('control-panel-functional__generate').createButton('Generate Cars');
+    generateBtn.addEventListener('click', () => this.generateCars(createCarBtn, createName, createColorBtn));
 
     createBlock.append(createName);
     createBlock.append(createColorBtn);
@@ -232,6 +238,7 @@ class Garage {
         }
       }
     });
+    this.carsArr.length = 0;
   }
 
   private static addCar(el: Car, page: HTMLDivElement) {
@@ -343,6 +350,28 @@ class Garage {
         }
       }
     }
+  }
+
+  private async generateCars(
+    createCarBtn: HTMLButtonElement,
+    createName: HTMLInputElement,
+    createColorBtn: HTMLInputElement,
+  ) {
+    const carName = createName;
+    const carColor = createColorBtn;
+
+    this.carsArr = Array.from({ length: GENERATE_CARS }, () => {
+      return { name: this.util.getRandomName(), color: this.util.getRandomColor(), id: 0 };
+    });
+
+    this.carsArr.forEach((el) => {
+      carName.value = el.name;
+      carColor.value = el.color;
+      createCarBtn.dispatchEvent(new Event('click'));
+    });
+
+    carName.value = '';
+    carColor.value = '#ffffff';
   }
 
   private async updateCar(
