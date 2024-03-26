@@ -75,6 +75,13 @@
     background-image: url(../../assets/img/finish.svg);
     background-size: cover;
   }
+  &__start {
+    &_disabled {
+      pointer-events: none;
+      user-select: none;
+      background-color: var(--disabled);
+    }
+  }
 }
 
 .control-panel {
@@ -118,3 +125,31 @@
     }
   }
 }
+
+.stop-car {
+  animation-play-state: paused;
+}
+
+.car-drive {
+	animation-name: drive;
+  animation-timing-function: linear;
+}
+.car-finished {
+  transform: translateX(calc(var(--track-width) - 230px));
+}
+@keyframes drive {
+  from {transform: translateX(0);}
+  to {transform: translateX(calc(var(--track-width) - 230px));}
+}
+
+/* .car-to-finish {
+  animation-name: finished;
+  animation-timing-function: linear;
+}
+.car-on-finish {
+  transform: translateX(calc(var(--track-width) - 230px));
+}
+@keyframes finished {
+	from {transform: translateX(calc(var(--track-width) - 414px));}
+	to {transform: translateX(calc(var(--track-width) - 230px));}
+} */

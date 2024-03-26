@@ -410,6 +410,10 @@ class Garage {
     if (target.textContent === 'Remove') this.removeCar(target);
 
     if (target.textContent === 'Select') this.selectCar(target);
+
+    if (target.textContent === 'S') this.driveCar(target);
+
+    if (target.textContent === 'R') this.resetCar(target);
   }
 
   private async removeCar(removeButton: HTMLButtonElement) {
@@ -469,6 +473,56 @@ class Garage {
 
       inputCarName.value = car.name;
       inputCarColor.value = car.color;
+    }
+  }
+
+  private async driveCar(startButton: HTMLButtonElement) {
+    const parent = startButton.parentElement;
+    startButton.classList.add('track__start_disabled');
+    if (!parent) return;
+
+    const currentCar = parent.parentElement;
+    if (!currentCar) return;
+
+    const animationTime = await this.asyncApi.startEngine(currentCar.id);
+
+    document.documentElement.style.setProperty('--track-width', `${parent.clientWidth}px`);
+
+    const carImg = parent.querySelector('.track__car-img');
+    if (!(carImg instanceof SVGSVGElement)) return;
+
+    carImg.style.animationDuration = `${animationTime}ms`;
+
+    carImg.classList.add('car-drive');
+
+    const isFinished = await this.asyncApi.driveCar(currentCar.id);
+
+    if (!isFinished) carImg.classList.add('stop-car');
+    else {
+      carImg.classList.add('car-finished');
+      /*       carImg.style.animationDuration = `${(animationTime / (parent.clientWidth - 414)) * 184}ms`;
+      carImg.classList.add('car-to-finish');
+      carImg.classList.add('car-on-finish'); */
+    }
+  }
+
+  private async resetCar(resetButton: HTMLButtonElement) {
+    const parent = resetButton.parentElement;
+    if (!parent) return;
+
+    const currentCar = parent.parentElement;
+    if (!currentCar) return;
+
+    const carImg = parent.querySelector('.track__car-img');
+    if (!(carImg instanceof SVGSVGElement)) return;
+
+    if (await this.asyncApi.stopEngine(currentCar.id)) {
+      // this.asyncApi.controller.abort();
+      currentCar.dispatchEvent(new Event('carStopped', { bubbles: true }));
+      carImg.classList.add('stop-car');
+      carImg.classList.remove('car-finished');
+      carImg.classList.remove('car-drive');
+      carImg.classList.remove('stop-car');
     }
   }
 

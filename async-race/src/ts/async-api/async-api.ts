@@ -9,6 +9,11 @@ interface CarInput {
   color: string;
 }
 
+interface Speed {
+  velocity: number;
+  distance: number;
+}
+
 class AsyncAPI {
   private cars: Car[];
 
@@ -20,12 +25,24 @@ class AsyncAPI {
 
   private isUpdated: boolean;
 
+  private isSuccess: boolean;
+
+  private isStarted: boolean;
+
+  private isStopped: boolean;
+
+  // public controller: AbortController;
+
   constructor() {
     this.cars = [];
     this.car = { name: '', color: '#ffffff', id: 0 };
     this.isCreated = false;
     this.isDeleted = false;
     this.isUpdated = false;
+    this.isSuccess = false;
+    this.isStarted = false;
+    this.isStopped = false;
+    // this.controller = new AbortController();
   }
 
   public async getCars() {
@@ -103,6 +120,53 @@ class AsyncAPI {
     this.isUpdated = true;
 
     return this.isUpdated;
+  }
+
+  public async startEngine(carId: string) {
+    this.isStarted = false;
+    const response = await fetch(`http://127.0.0.1:3000/engine?id=${carId}&status=started`, {
+      method: 'PATCH',
+      cache: 'no-store',
+    });
+
+    if (!(response.status === 200)) throw new Error('Response was not OK');
+
+    const carSpeed: Speed = await response.json();
+
+    return Math.floor(carSpeed.distance / carSpeed.velocity);
+  }
+
+  public async stopEngine(carId: string) {
+    this.isStopped = false;
+    const response = await fetch(`http://127.0.0.1:3000/engine?id=${carId}&status=stopped`, {
+      method: 'PATCH',
+      cache: 'no-store',
+    });
+
+    if (!(response.status === 200)) throw new Error('Response was not OK');
+
+    this.isStopped = true;
+
+    return this.isStopped;
+  }
+
+  public async driveCar(carId: string) {
+    this.isSuccess = false;
+    // try {
+    const response = await fetch(`http://127.0.0.1:3000/engine?id=${carId}&status=drive`, {
+      method: 'PATCH',
+      cache: 'no-store',
+      // signal: this.controller.signal,
+    });
+
+    if (response.status === 500) return false;
+
+    if (!(response.status === 200)) throw new Error('Response was not OK');
+    /*     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') console.log('Car was stopped');
+    } */
+
+    return true;
   }
 }
 
