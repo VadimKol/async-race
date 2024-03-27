@@ -14,6 +14,11 @@ interface CarInput {
   color: string;
 }
 
+interface CarWithSpeed {
+  animation: number;
+  id: number;
+}
+
 const MAX_CARS_ON_PAGE = 7;
 const GENERATE_CARS = 100;
 
@@ -29,6 +34,8 @@ class Garage {
   private controlPanel: HTMLDivElement;
 
   private garagePages: HTMLDivElement;
+
+  private winnerMgs: HTMLParagraphElement;
 
   private carsArr: Car[];
 
@@ -51,6 +58,7 @@ class Garage {
     this.nav = document.createElement('nav');
     this.controlPanel = document.createElement('div');
     this.garagePages = document.createElement('div');
+    this.winnerMgs = document.createElement('p');
     this.carsArr = [];
     this.asyncApi = new AsyncAPI();
     this.lastPage = null;
@@ -67,7 +75,8 @@ class Garage {
     this.nav.classList.add('nav');
     this.controlPanel.classList.add('control-panel');
     this.garagePages.classList.add('garage');
-    this.garagePages.addEventListener('click', (event) => this.whichButton(event));
+    this.garagePages.addEventListener('click', this.whichButton.bind(this));
+    this.winnerMgs.classList.add('winner-msg');
 
     const toGarageBtn = new Button('nav__garage').createButton('To Garage');
     const toWinnersBtn = new Button('nav__winners').createButton('To Winners');
@@ -88,6 +97,7 @@ class Garage {
 
     this.garageScreen.append(this.header);
     this.garageScreen.append(this.main);
+    this.garageScreen.append(this.winnerMgs);
     return this.garageScreen;
   }
 
@@ -106,6 +116,7 @@ class Garage {
 
     const createCarBtn = new Button('control-panel-create__crt').createButton('Create');
     // createName это ссылка на объект в DOM, его не нужно снова получать внутри хэндлера!
+    // TODO переделать
     createCarBtn.addEventListener('click', () =>
       this.createCar({ name: createName.value, color: createColorBtn.value }, createName, createColorBtn),
     );
@@ -123,6 +134,7 @@ class Garage {
     updateColorBtn.value = '#ffffff';
 
     const updateCarBtn = new Button('control-panel-update__upt').createButton('Update');
+    // TODO переделать
     updateCarBtn.addEventListener('click', () =>
       this.updateCar(
         { name: updateName.value, color: updateColorBtn.value, id: this.selectedCar },
@@ -142,7 +154,10 @@ class Garage {
     const raceBtn = new Button('control-panel-functional__race').createButton('Race');
     const resetBtn = new Button('control-panel-functional__reset').createButton('Reset');
     const generateBtn = new Button('control-panel-functional__generate').createButton('Generate Cars');
+    raceBtn.addEventListener('click', this.race.bind(this));
+    resetBtn.addEventListener('click', this.reset.bind(this));
     generateBtn.addEventListener('click', () => this.generateCars(createCarBtn, createName, createColorBtn));
+    resetBtn.classList.add('control-panel-functional__reset_disabled');
 
     createBlock.append(createName);
     createBlock.append(createColorBtn);
@@ -170,6 +185,7 @@ class Garage {
 
     const prevPageBtn = new Button('garage-controls__prev').createButton('<-');
     const nextPageBtn = new Button('garage-controls__next').createButton('->');
+    // TODO переделать
     prevPageBtn.addEventListener('click', () => this.movePage(false));
     nextPageBtn.addEventListener('click', () => this.movePage(true));
 
@@ -351,6 +367,7 @@ class Garage {
         }
       }
     }
+    // TODO Update pageView
   }
 
   private async generateCars(
@@ -373,6 +390,7 @@ class Garage {
 
     carName.value = '';
     carColor.value = '#ffffff';
+    // this.carsArr.forEach((car) => this.asyncApi.createCar(car));
   }
 
   private async updateCar(
@@ -408,13 +426,22 @@ class Garage {
 
     if (!(target instanceof HTMLButtonElement)) return;
 
-    if (target.textContent === 'Remove') this.removeCar(target);
-
-    if (target.textContent === 'Select') this.selectCar(target);
-
-    if (target.textContent === 'S') this.driveCar(target);
-
-    if (target.textContent === 'R') this.resetCar(target);
+    // TODO не по textContent
+    switch (target.textContent) {
+      case 'Remove':
+        this.removeCar(target);
+        break;
+      case 'Select':
+        this.selectCar(target);
+        break;
+      case 'S':
+        this.driveCar(target);
+        break;
+      case 'R':
+        this.resetCar(target);
+        break;
+      default:
+    }
   }
 
   private async removeCar(removeButton: HTMLButtonElement) {
@@ -449,6 +476,8 @@ class Garage {
         }
       }
     }
+
+    // TODO update pageView
   }
 
   private async selectCar(selectButton: HTMLButtonElement) {
@@ -477,33 +506,93 @@ class Garage {
     }
   }
 
+  private AreAllStartButtonsOn(): boolean {
+    const currentPage = this.garagePages.querySelector('.garage-page_show');
+    if (!currentPage) return false;
+
+    return !currentPage.querySelector('.track__start_disabled');
+  }
+
+  private AreAllRestartButtonsOn(): boolean {
+    const currentPage = this.garagePages.querySelector('.garage-page_show');
+    if (!currentPage) return false;
+
+    return !currentPage.querySelector('.track__restart_disabled');
+  }
+
+  private AreAllRestartButtonsOff(): boolean {
+    const currentPage = this.garagePages.querySelector('.garage-page_show');
+    if (!currentPage) return false;
+
+    const carsRestartButtons = Array.from(currentPage.querySelectorAll('.track__restart'));
+
+    return (
+      carsRestartButtons.length ===
+      carsRestartButtons.filter((el) => el.classList.contains('track__restart_disabled')).length
+    );
+  }
+
+  private PaginationButtonsStateChanger(turnOn: boolean): void {
+    const prevPageBtn = this.garagePages.querySelector('.garage-controls__prev');
+    const nextPageBtn = this.garagePages.querySelector('.garage-controls__next');
+    if (!prevPageBtn) return;
+    if (!nextPageBtn) return;
+    if (turnOn) {
+      prevPageBtn.classList.remove('garage-controls__prev_disabled');
+      nextPageBtn.classList.remove('garage-controls__next_disabled');
+    } else {
+      prevPageBtn.classList.add('garage-controls__prev_disabled');
+      nextPageBtn.classList.add('garage-controls__next_disabled');
+    }
+  }
+
   private async driveCar(startButton: HTMLButtonElement) {
+    this.PaginationButtonsStateChanger(false);
+
+    const returnvalue: CarWithSpeed = { animation: -1, id: -1 };
+
     const parent = startButton.parentElement;
+    if (!parent) return returnvalue;
+
     startButton.classList.add('track__start_disabled');
-    if (!parent) return;
+    const raceButton = document.querySelector('.control-panel-functional__race');
+    if (raceButton) raceButton.classList.add('control-panel-functional__race_disabled');
 
     const currentCar = parent.parentElement;
-    if (!currentCar) return;
+    if (!currentCar) return returnvalue;
 
     const animationTime = await this.asyncApi.startEngine(currentCar.id);
 
     document.documentElement.style.setProperty('--track-width', `${parent.clientWidth}px`);
 
     const carImg = parent.querySelector('.track__car-img');
-    if (!(carImg instanceof SVGSVGElement)) return;
+    if (!(carImg instanceof SVGSVGElement)) return returnvalue;
 
     carImg.style.animationDuration = `${animationTime}ms`;
 
     carImg.classList.add('car-drive');
+    carImg.classList.add('car-finished');
     const restartBtn = parent.querySelector('.track__restart');
     if (restartBtn) restartBtn.classList.remove('track__restart_disabled');
+
+    /*     const resetButton = document.querySelector('.control-panel-functional__reset');
+    if (resetButton) resetButton.classList.remove('control-panel-functional__reset_disabled'); */
+
+    if (this.AreAllRestartButtonsOn()) {
+      const resetButton = document.querySelector('.control-panel-functional__reset');
+      if (resetButton) resetButton.classList.remove('control-panel-functional__reset_disabled');
+    }
 
     try {
       const isFinished = await this.asyncApi.driveCar(currentCar.id);
 
-      if (!isFinished) carImg.classList.add('stop-car');
-      else {
-        carImg.classList.add('car-finished');
+      if (!isFinished) {
+        carImg.classList.add('stop-car');
+        carImg.classList.add('track__car-img_fire');
+      } else {
+        // carImg.classList.add('car-finished');
+        returnvalue.animation = animationTime;
+        returnvalue.id = Number(currentCar.id);
         /*       carImg.style.animationDuration = `${(animationTime / (parent.clientWidth - 414)) * 184}ms`;
           carImg.classList.add('car-to-finish');
           carImg.classList.add('car-on-finish'); */
@@ -513,11 +602,16 @@ class Garage {
       if (err instanceof Error && err.name === 'AbortError')
         this.asyncApi.aborted = this.asyncApi.aborted.filter((el) => el.carId !== Number(currentCar.id));
     }
+    return returnvalue;
   }
 
   private async resetCar(resetButton: HTMLButtonElement) {
     const parent = resetButton.parentElement;
     resetButton.classList.add('track__restart_disabled');
+    if (this.AreAllRestartButtonsOff()) {
+      const resetAllBtn = document.querySelector('.control-panel-functional__reset');
+      if (resetAllBtn) resetAllBtn.classList.add('control-panel-functional__reset_disabled');
+    }
     if (!parent) return;
 
     const currentCar = parent.parentElement;
@@ -533,10 +627,76 @@ class Garage {
       carImg.classList.add('stop-car');
       carImg.classList.remove('car-finished');
       carImg.classList.remove('car-drive');
+      carImg.classList.remove('track__car-img_fire');
       carImg.classList.remove('stop-car');
       const startButton = parent.querySelector('.track__start');
       if (startButton) startButton.classList.remove('track__start_disabled');
+      if (this.AreAllStartButtonsOn()) {
+        const raceButton = document.querySelector('.control-panel-functional__race');
+        if (raceButton) raceButton.classList.remove('control-panel-functional__race_disabled');
+        this.PaginationButtonsStateChanger(true);
+      }
     }
+  }
+
+  private async race() {
+    const currentPage = this.garagePages.querySelector('.garage-page_show');
+    if (!currentPage) return;
+
+    const cars = currentPage.querySelector('.garage-page__cars');
+    if (!cars) return;
+
+    const carsStartButtons: NodeListOf<HTMLButtonElement> = currentPage.querySelectorAll('.track__start');
+
+    const promises: Promise<CarWithSpeed>[] = [];
+
+    carsStartButtons.forEach((el) => {
+      promises.push(this.driveCar(el));
+    });
+
+    const results = await Promise.allSettled(promises);
+
+    const winner = results
+      .filter(
+        (el: PromiseSettledResult<CarWithSpeed>): el is PromiseFulfilledResult<CarWithSpeed> =>
+          el.status === 'fulfilled',
+      )
+      .filter((el) => el.value.animation !== -1)
+      .map((el) => el.value)
+      .sort((a, b) => a.animation - b.animation)[0];
+
+    if (winner) {
+      const winnerCar = document.getElementById(String(winner.id));
+      if (!winnerCar) return;
+      const carName = winnerCar.querySelector('.car-controls__name');
+      if (!carName) return;
+      const winnerName = carName.textContent;
+      if (winnerName !== null) this.showModalWinner(winnerName, winner.animation);
+    } else console.log('All cars didnt get to finish');
+  }
+
+  private showModalWinner(carName: string, time: number) {
+    this.winnerMgs.textContent = `${carName} won (${Math.trunc(time / 10) / 100}s)`;
+    this.winnerMgs.classList.add('winner-msg_show');
+    setTimeout(() => {
+      this.winnerMgs.classList.remove('winner-msg_show');
+    }, 7000);
+  }
+
+  private reset() {
+    const currentPage = this.garagePages.querySelector('.garage-page_show');
+    if (!currentPage) return;
+
+    const cars = currentPage.querySelector('.garage-page__cars');
+    if (!cars) return;
+
+    const carsRestartButtons = Array.from(currentPage.querySelectorAll('.track__restart')).filter(
+      (el) => !el.classList.contains('track__restart_disabled'),
+    );
+
+    carsRestartButtons.forEach((el) => {
+      el.dispatchEvent(new Event('click', { bubbles: true }));
+    });
   }
 
   private static toGarage() {
