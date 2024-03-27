@@ -75,7 +75,8 @@
     background-image: url(../../assets/img/finish.svg);
     background-size: cover;
   }
-  &__start {
+  &__start,
+  &__restart{
     &_disabled {
       pointer-events: none;
       user-select: none;

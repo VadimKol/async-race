@@ -261,6 +261,7 @@ class Garage {
 
     const startBtn = new Button('track__start').createButton('S');
     const restartBtn = new Button('track__restart').createButton('R');
+    restartBtn.classList.add('track__restart_disabled');
 
     const finishImg = document.createElement('div');
     finishImg.classList.add('track__finish');
@@ -494,20 +495,29 @@ class Garage {
     carImg.style.animationDuration = `${animationTime}ms`;
 
     carImg.classList.add('car-drive');
+    const restartBtn = parent.querySelector('.track__restart');
+    if (restartBtn) restartBtn.classList.remove('track__restart_disabled');
 
-    const isFinished = await this.asyncApi.driveCar(currentCar.id);
+    try {
+      const isFinished = await this.asyncApi.driveCar(currentCar.id);
 
-    if (!isFinished) carImg.classList.add('stop-car');
-    else {
-      carImg.classList.add('car-finished');
-      /*       carImg.style.animationDuration = `${(animationTime / (parent.clientWidth - 414)) * 184}ms`;
-      carImg.classList.add('car-to-finish');
-      carImg.classList.add('car-on-finish'); */
+      if (!isFinished) carImg.classList.add('stop-car');
+      else {
+        carImg.classList.add('car-finished');
+        /*       carImg.style.animationDuration = `${(animationTime / (parent.clientWidth - 414)) * 184}ms`;
+          carImg.classList.add('car-to-finish');
+          carImg.classList.add('car-on-finish'); */
+      }
+      this.asyncApi.aborted = this.asyncApi.aborted.filter((el) => el.carId !== Number(currentCar.id));
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError')
+        this.asyncApi.aborted = this.asyncApi.aborted.filter((el) => el.carId !== Number(currentCar.id));
     }
   }
 
   private async resetCar(resetButton: HTMLButtonElement) {
     const parent = resetButton.parentElement;
+    resetButton.classList.add('track__restart_disabled');
     if (!parent) return;
 
     const currentCar = parent.parentElement;
@@ -517,12 +527,15 @@ class Garage {
     if (!(carImg instanceof SVGSVGElement)) return;
 
     if (await this.asyncApi.stopEngine(currentCar.id)) {
-      // this.asyncApi.controller.abort();
-      currentCar.dispatchEvent(new Event('carStopped', { bubbles: true }));
+      const index = this.asyncApi.aborted.map((el) => el.carId).indexOf(Number(currentCar.id));
+      const requestToAbort = this.asyncApi.aborted[index];
+      if (requestToAbort) requestToAbort.controller.abort();
       carImg.classList.add('stop-car');
       carImg.classList.remove('car-finished');
       carImg.classList.remove('car-drive');
       carImg.classList.remove('stop-car');
+      const startButton = parent.querySelector('.track__start');
+      if (startButton) startButton.classList.remove('track__start_disabled');
     }
   }
 

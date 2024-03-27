@@ -14,6 +14,11 @@ interface Speed {
   distance: number;
 }
 
+interface Aborted {
+  controller: AbortController;
+  carId: number;
+}
+
 class AsyncAPI {
   private cars: Car[];
 
@@ -25,13 +30,11 @@ class AsyncAPI {
 
   private isUpdated: boolean;
 
-  private isSuccess: boolean;
-
   private isStarted: boolean;
 
   private isStopped: boolean;
 
-  // public controller: AbortController;
+  public aborted: Aborted[];
 
   constructor() {
     this.cars = [];
@@ -39,10 +42,9 @@ class AsyncAPI {
     this.isCreated = false;
     this.isDeleted = false;
     this.isUpdated = false;
-    this.isSuccess = false;
     this.isStarted = false;
     this.isStopped = false;
-    // this.controller = new AbortController();
+    this.aborted = [];
   }
 
   public async getCars() {
@@ -151,12 +153,17 @@ class AsyncAPI {
   }
 
   public async driveCar(carId: string) {
-    this.isSuccess = false;
+    const control = new AbortController();
+    this.aborted.push({ controller: control, carId: Number(carId) });
     // try {
+
+    // аборт и 500 ошибка
+    // но 500 ошибка не ловится выше, все норм
+    // но можно было бы перехватывать здесь все 3 случая, а аборт прокидывать выше
     const response = await fetch(`http://127.0.0.1:3000/engine?id=${carId}&status=drive`, {
       method: 'PATCH',
       cache: 'no-store',
-      // signal: this.controller.signal,
+      signal: control.signal,
     });
 
     if (response.status === 500) return false;
