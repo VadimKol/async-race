@@ -13,8 +13,11 @@ class App {
   }
 
   public start(): void {
-    this.body.append(new Garage().create());
-    this.body.append(new Winners().create());
+    const winners = new Winners();
+    const garage = new Garage();
+    this.body.append(garage.create());
+    this.body.append(winners.create());
+    this.body.addEventListener('createWinner', () => winners.addWinnerInfo(garage.winner));
   }
 }
 

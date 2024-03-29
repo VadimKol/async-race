@@ -19,6 +19,12 @@ interface CarWithSpeed {
   id: number;
 }
 
+interface Winner {
+  id: number;
+  wins: number;
+  time: number;
+}
+
 const MAX_CARS_ON_PAGE = 7;
 const GENERATE_CARS = 100;
 
@@ -36,6 +42,8 @@ class Garage {
   private garagePages: HTMLDivElement;
 
   private winnerMgs: HTMLParagraphElement;
+
+  public winner: Winner;
 
   private carsArr: Car[];
 
@@ -66,6 +74,7 @@ class Garage {
     this.totalCars = 0;
     this.selectedCar = 0;
     this.util = new Util();
+    this.winner = { id: -1, wins: 0, time: -1 };
   }
 
   public create(): HTMLDivElement {
@@ -671,12 +680,16 @@ class Garage {
       const carName = winnerCar.querySelector('.car-controls__name');
       if (!carName) return;
       const winnerName = carName.textContent;
-      if (winnerName !== null) this.showModalWinner(winnerName, winner.animation);
-    } else console.log('All cars didnt get to finish');
+      if (winnerName !== null) this.showModalWinner(winnerName, winner.animation, false);
+      this.winner = { id: winner.id, wins: 1, time: Math.trunc(winner.animation / 10) / 100 };
+      document.body.dispatchEvent(new Event('createWinner'));
+    } else this.showModalWinner('', -1, true);
   }
 
-  private showModalWinner(carName: string, time: number) {
-    this.winnerMgs.textContent = `${carName} won (${Math.trunc(time / 10) / 100}s)`;
+  private showModalWinner(carName: string, time: number, noWinner: boolean) {
+    this.winnerMgs.textContent = noWinner
+      ? 'All the cars are broken'
+      : `${carName} won (${Math.trunc(time / 10) / 100}s)`;
     this.winnerMgs.classList.add('winner-msg_show');
     setTimeout(() => {
       this.winnerMgs.classList.remove('winner-msg_show');

@@ -22,10 +22,13 @@
       gap: 50px;
       &__item {
         &:nth-child(2) {
-          margin-right: 27px;
+          width: 50px;
+          text-align: center;
         }
         &:nth-child(3) {
-          margin-right: 40px;
+          margin-right: -10px;
+          width: 125px;
+          text-align: center;
         }
         &:nth-child(4) {
           margin-right: -20px;
@@ -51,5 +54,12 @@
   &__car-img {
     width: 50px;
     height: 23px;
+  }
+  &__name {
+    width: 125px;
+    text-align: center;
+  }
+  &__wins {
+    width: 25px;
   }
 }

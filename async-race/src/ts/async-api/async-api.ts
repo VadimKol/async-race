@@ -19,16 +19,30 @@ interface Aborted {
   carId: number;
 }
 
+interface Winner {
+  id: number;
+  wins: number;
+  time: number;
+}
+
 class AsyncAPI {
   private cars: Car[];
 
   private car: Car;
 
+  private winner: Winner;
+
+  private winners: Winner[];
+
   private isCreated: boolean;
+
+  private isWinnerCreated: boolean;
 
   private isDeleted: boolean;
 
   private isUpdated: boolean;
+
+  private isWinnerUpdated: boolean;
 
   private isStarted: boolean;
 
@@ -39,9 +53,13 @@ class AsyncAPI {
   constructor() {
     this.cars = [];
     this.car = { name: '', color: '#ffffff', id: 0 };
+    this.winners = [];
+    this.winner = { id: -1, wins: 0, time: -1 };
     this.isCreated = false;
+    this.isWinnerCreated = false;
     this.isDeleted = false;
     this.isUpdated = false;
+    this.isWinnerUpdated = false;
     this.isStarted = false;
     this.isStopped = false;
     this.aborted = [];
@@ -174,6 +192,72 @@ class AsyncAPI {
     } */
 
     return true;
+  }
+
+  public async getWinners(currentPage: number, limit: number, sort: string, order: string) {
+    const response = await fetch(
+      `http://127.0.0.1:3000/winners?_page=${currentPage}&_limit=${limit}&_sort=${sort}&_order=${order}`,
+      { method: 'GET', cache: 'no-store' },
+    );
+    const total = response.headers.get('X-Total-Count');
+
+    if (!total) throw new Error('Bad header');
+
+    if (!(response.status === 200)) throw new Error('Response was not OK');
+
+    this.winners = await response.json();
+
+    return { total, winners: this.winners };
+  }
+
+  public async getWinner(carId: string) {
+    this.winner = { id: -1, wins: 0, time: -1 };
+    const response = await fetch(`http://127.0.0.1:3000/winners/${carId}`, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+
+    if (response.status === 404) return this.winner;
+
+    if (!(response.status === 200)) throw new Error('Response was not OK');
+
+    this.winner = await response.json();
+
+    return this.winner;
+  }
+
+  public async createWinner(winner: Winner) {
+    this.isWinnerCreated = false;
+
+    const response = await fetch('http://127.0.0.1:3000/winners', {
+      method: 'POST',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(winner),
+    });
+
+    if (!(response.status === 201)) throw new Error('Response was not OK');
+
+    this.isWinnerCreated = true;
+
+    return this.isWinnerCreated;
+  }
+
+  public async updateWinner(winner: Winner) {
+    this.isWinnerUpdated = false;
+
+    const response = await fetch(`http://127.0.0.1:3000/winners/${winner.id}`, {
+      method: 'PUT',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wins: winner.wins, time: winner.time }),
+    });
+
+    if (!(response.status === 200)) throw new Error('Response was not OK');
+
+    this.isWinnerUpdated = true;
+
+    return this.isWinnerUpdated;
   }
 }
 
