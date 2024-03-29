@@ -96,13 +96,14 @@ class Winners {
   private feedWinners() {
     const winnersTitle = document.createElement('h2');
     winnersTitle.classList.add('winners__title');
-    // winnersTitle.append(`Winners (${this.total})`);
 
     const winnersControls = document.createElement('div');
     winnersControls.classList.add('winners-controls');
 
     const prevPageBtn = new Button('winners-controls__prev').createButton('<-');
     const nextPageBtn = new Button('winners-controls__next').createButton('->');
+    prevPageBtn.addEventListener('click', () => this.movePage(false));
+    nextPageBtn.addEventListener('click', () => this.movePage(true));
 
     winnersControls.append(prevPageBtn);
     winnersControls.append(nextPageBtn);
@@ -247,17 +248,8 @@ class Winners {
     const winnersTitle = this.winnersPages.querySelector('.winners__title');
     if (winnersTitle) winnersTitle.textContent = `Winners (${total})`;
     this.winnersBlock.replaceChildren();
-    winners.forEach((el) => {
-      const car = document.getElementById(String(el.id));
-      if (!car) return;
-      const carName = car.querySelector('.car-controls__name');
-      if (!carName) return;
-      const name = carName.textContent;
-      if (!name) return;
-      const carImg = car.querySelector('.track__car-img');
-      if (!carImg) return;
-      const color = carImg.getAttributeNS(null, 'fill');
-      if (!color) return;
+    winners.forEach(async (el) => {
+      const { name, color } = await this.asyncApi.getCar(String(el.id));
       this.addWinner(el.id, el.wins, el.time, name, color);
     });
   }
@@ -280,6 +272,20 @@ class Winners {
       await this.asyncApi.deleteWinner(String(winner.id));
       this.UpdateWinnersPage(this.sortObj.type, this.sortObj.order);
     }
+  }
+
+  private async movePage(whereTo: boolean) {
+    this.currentPage = whereTo ? this.currentPage + 1 : this.currentPage - 1;
+
+    const { winners } = await this.asyncApi.getWinners(
+      this.currentPage,
+      MAX_WINNERS_ON_PAGE,
+      this.sortObj.type,
+      this.sortObj.order,
+    );
+
+    if (winners.length === 0) this.currentPage = whereTo ? this.currentPage - 1 : this.currentPage + 1;
+    else this.UpdateWinnersPage(this.sortObj.type, this.sortObj.order);
   }
 
   private toGarage() {
