@@ -10,6 +10,17 @@ interface Winner {
 
 const MAX_WINNERS_ON_PAGE = 10;
 
+enum SortType {
+  ID = 'id',
+  WINS = 'wins',
+  TIME = 'time',
+}
+
+interface SortObj {
+  type: string;
+  order: string;
+}
+
 class Winners {
   private winnersScreen: HTMLDivElement;
 
@@ -27,15 +38,27 @@ class Winners {
 
   private currentPage: number;
 
+  private numberSort: HTMLLIElement;
+
+  private winsSort: HTMLLIElement;
+
+  private timeSort: HTMLLIElement;
+
+  private sortObj: SortObj;
+
   constructor() {
     this.winnersScreen = document.createElement('div');
     this.header = document.createElement('header');
     this.main = document.createElement('main');
     this.nav = document.createElement('nav');
     this.winnersPages = document.createElement('div');
+    this.winnersBlock = document.createElement('div');
+    this.numberSort = document.createElement('li');
+    this.winsSort = document.createElement('li');
+    this.timeSort = document.createElement('li');
     this.asyncApi = new AsyncAPI();
     this.currentPage = 1;
-    this.winnersBlock = document.createElement('div');
+    this.sortObj = { type: 'id', order: 'ASC' };
   }
 
   public create(): HTMLDivElement {
@@ -44,6 +67,10 @@ class Winners {
     this.main.classList.add('main');
     this.nav.classList.add('nav');
     this.winnersPages.classList.add('winners');
+    this.winnersBlock.classList.add('winners-page__winners-block');
+    this.numberSort.classList.add('winners-page-header__item');
+    this.winsSort.classList.add('winners-page-header__item');
+    this.timeSort.classList.add('winners-page-header__item');
 
     const toGarageBtn = new Button('nav__garage').createButton('To Garage');
     const toWinnersBtn = new Button('nav__winners').createButton('To Winners');
@@ -62,7 +89,7 @@ class Winners {
 
     this.winnersScreen.append(this.header);
     this.winnersScreen.append(this.main);
-    this.UpdateWinnersPage();
+    this.UpdateWinnersPage(this.sortObj.type, this.sortObj.order);
     return this.winnersScreen;
   }
 
@@ -99,19 +126,67 @@ class Winners {
     const headerNames = ['Number', 'Car', 'Name', 'Wins', 'Best time (seconds)'];
 
     headerNames.forEach((el) => {
-      const winnersPageHeaderItem = document.createElement('li');
-      winnersPageHeaderItem.classList.add('winners-page-header__item');
-      winnersPageHeaderItem.append(el);
-      winnersPageHeader.append(winnersPageHeaderItem);
+      if (el === 'Number') {
+        this.numberSort.append(el);
+        this.numberSort.addEventListener('click', () => this.sortBy(this.numberSort, this.winsSort, this.timeSort));
+        winnersPageHeader.append(this.numberSort);
+      } else if (el === 'Wins') {
+        this.winsSort.append(el);
+        this.winsSort.addEventListener('click', () => this.sortBy(this.winsSort, this.numberSort, this.timeSort));
+        winnersPageHeader.append(this.winsSort);
+      } else if (el === 'Best time (seconds)') {
+        this.timeSort.append(el);
+        this.timeSort.addEventListener('click', () => this.sortBy(this.timeSort, this.numberSort, this.winsSort));
+        winnersPageHeader.append(this.timeSort);
+      } else {
+        const winnersPageHeaderItem = document.createElement('li');
+        winnersPageHeaderItem.classList.add('winners-page-header__item');
+        winnersPageHeaderItem.append(el);
+        winnersPageHeader.append(winnersPageHeaderItem);
+      }
     });
-
-    this.winnersBlock.classList.add('winners-page__winners-block');
 
     winnersPage.append(winnersPageTitle);
     winnersPage.append(winnersPageHeader);
     winnersPage.append(this.winnersBlock);
 
     this.winnersPages.append(winnersPage);
+  }
+
+  private async sortBy(sorting: HTMLLIElement, removeSortFirst: HTMLLIElement, removeSortSecond: HTMLLIElement) {
+    removeSortFirst.classList.remove('winners-page-header__item_asc');
+    removeSortFirst.classList.remove('winners-page-header__item_desc');
+    removeSortSecond.classList.remove('winners-page-header__item_asc');
+    removeSortSecond.classList.remove('winners-page-header__item_desc');
+
+    let sortType = '';
+
+    switch (sorting.textContent) {
+      case 'Number':
+        sortType = SortType.ID;
+        break;
+      case 'Wins':
+        sortType = SortType.WINS;
+        break;
+      case 'Best time (seconds)':
+        sortType = SortType.TIME;
+        break;
+      default:
+        break;
+    }
+    this.sortObj.type = sortType;
+
+    if (sorting.classList.contains('winners-page-header__item_asc')) {
+      sorting.classList.remove('winners-page-header__item_asc');
+      sorting.classList.add('winners-page-header__item_desc');
+      this.sortObj.order = 'DESC';
+      this.UpdateWinnersPage(sortType, 'DESC');
+    } else {
+      sorting.classList.remove('winners-page-header__item_desc');
+      sorting.classList.add('winners-page-header__item_asc');
+      this.sortObj.order = 'ASC';
+      this.UpdateWinnersPage(sortType, 'ASC');
+    }
   }
 
   private addWinner(id: number, wins: number, time: number, name: string, color: string) {
@@ -167,8 +242,8 @@ class Winners {
     return carImg;
   }
 
-  private async UpdateWinnersPage() {
-    const { total, winners } = await this.asyncApi.getWinners(this.currentPage, MAX_WINNERS_ON_PAGE, 'id', 'ASC');
+  private async UpdateWinnersPage(sort: string, order: string) {
+    const { total, winners } = await this.asyncApi.getWinners(this.currentPage, MAX_WINNERS_ON_PAGE, sort, order);
     const winnersTitle = this.winnersPages.querySelector('.winners__title');
     if (winnersTitle) winnersTitle.textContent = `Winners (${total})`;
     this.winnersBlock.replaceChildren();
@@ -196,7 +271,15 @@ class Winners {
       winnerInfo.wins += 1;
       await this.asyncApi.updateWinner(winnerInfo);
     }
-    this.UpdateWinnersPage();
+    this.UpdateWinnersPage(this.sortObj.type, this.sortObj.order);
+  }
+
+  public async deleteWinnerInfo(winner: Winner) {
+    const winnerInfo = await this.asyncApi.getWinner(String(winner.id));
+    if (winnerInfo.wins !== 0) {
+      await this.asyncApi.deleteWinner(String(winner.id));
+      this.UpdateWinnersPage(this.sortObj.type, this.sortObj.order);
+    }
   }
 
   private toGarage() {

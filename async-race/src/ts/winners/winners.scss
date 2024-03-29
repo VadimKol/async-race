@@ -21,6 +21,7 @@
       display: flex;
       gap: 50px;
       &__item {
+        position: relative;
         &:nth-child(2) {
           width: 50px;
           text-align: center;
@@ -32,6 +33,36 @@
         }
         &:nth-child(4) {
           margin-right: -20px;
+        }
+        &:nth-child(1),
+        &:nth-child(4),
+        &:nth-child(5) {
+          @media (hover: hover) {
+            &:hover {
+              cursor: pointer;
+              user-select: none;
+            }
+          }
+        }
+        &_asc,
+        &_desc {
+          &::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: -3px;
+            width: 10px;
+            height: 16px;
+            display: inline-block;
+            background-size: cover;
+            background-position: center;
+          }
+        }
+        &_asc::after {
+          background-image: url(../../assets/img/up.svg);
+          }
+        &_desc::after {
+          background-image: url(../../assets/img/down.svg);
         }
       }
     }

@@ -40,6 +40,8 @@ class AsyncAPI {
 
   private isDeleted: boolean;
 
+  private isWinnerDeleted: boolean;
+
   private isUpdated: boolean;
 
   private isWinnerUpdated: boolean;
@@ -58,6 +60,7 @@ class AsyncAPI {
     this.isCreated = false;
     this.isWinnerCreated = false;
     this.isDeleted = false;
+    this.isWinnerDeleted = false;
     this.isUpdated = false;
     this.isWinnerUpdated = false;
     this.isStarted = false;
@@ -258,6 +261,21 @@ class AsyncAPI {
     this.isWinnerUpdated = true;
 
     return this.isWinnerUpdated;
+  }
+
+  public async deleteWinner(carId: string) {
+    this.isWinnerDeleted = false;
+
+    const response = await fetch(`http://127.0.0.1:3000/winners/${carId}`, {
+      method: 'DELETE',
+      cache: 'no-store',
+    });
+
+    if (!(response.status === 200)) throw new Error('Response was not OK');
+
+    this.isWinnerDeleted = true;
+
+    return this.isWinnerDeleted;
   }
 }
 

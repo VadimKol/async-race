@@ -461,6 +461,8 @@ class Garage {
     if (!currentCar) return;
 
     if (await this.asyncApi.deleteCar(currentCar.id)) {
+      this.winner.id = Number(currentCar.id);
+      document.body.dispatchEvent(new Event('deleteWinner'));
       this.totalCars -= 1;
       const title = this.garagePages.querySelector('.garage__title');
       if (title) title.textContent = `Garage (${this.totalCars})`;
