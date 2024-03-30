@@ -284,6 +284,11 @@ class Winners {
   private async movePage(whereTo: boolean) {
     this.currentPage = whereTo ? this.currentPage + 1 : this.currentPage - 1;
 
+    if (this.currentPage < 1) {
+      this.currentPage = 1;
+      return;
+    }
+
     const { winners } = await this.asyncApi.getWinners(
       this.currentPage,
       MAX_WINNERS_ON_PAGE,
