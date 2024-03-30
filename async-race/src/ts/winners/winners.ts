@@ -247,11 +247,17 @@ class Winners {
     const { total, winners } = await this.asyncApi.getWinners(this.currentPage, MAX_WINNERS_ON_PAGE, sort, order);
     const winnersTitle = this.winnersPages.querySelector('.winners__title');
     if (winnersTitle) winnersTitle.textContent = `Winners (${total})`;
+    const winnersPageTitle = this.winnersPages.querySelector('.winners-page__title');
+    if (winnersPageTitle) winnersPageTitle.textContent = `Page #${this.currentPage}`;
+    // скачут кнопки
+    /*     const height = this.winnersPages.clientHeight;
+    this.winnersPages.style.height = `${height}px`; */
     this.winnersBlock.replaceChildren();
     winners.forEach(async (el) => {
       const { name, color } = await this.asyncApi.getCar(String(el.id));
       this.addWinner(el.id, el.wins, el.time, name, color);
     });
+    // this.winnersPages.style.height = 'auto';
   }
 
   public async addWinnerInfo(winner: Winner) {
