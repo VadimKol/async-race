@@ -154,7 +154,7 @@ class Winners {
     this.winnersPages.append(winnersPage);
   }
 
-  private async sortBy(sorting: HTMLLIElement, removeSortFirst: HTMLLIElement, removeSortSecond: HTMLLIElement) {
+  private sortBy(sorting: HTMLLIElement, removeSortFirst: HTMLLIElement, removeSortSecond: HTMLLIElement) {
     removeSortFirst.classList.remove('winners-page-header__item_asc');
     removeSortFirst.classList.remove('winners-page-header__item_desc');
     removeSortSecond.classList.remove('winners-page-header__item_asc');
@@ -249,15 +249,16 @@ class Winners {
     if (winnersTitle) winnersTitle.textContent = `Winners (${total})`;
     const winnersPageTitle = this.winnersPages.querySelector('.winners-page__title');
     if (winnersPageTitle) winnersPageTitle.textContent = `Page #${this.currentPage}`;
-    // скачут кнопки
-    /*     const height = this.winnersPages.clientHeight;
-    this.winnersPages.style.height = `${height}px`; */
+    const height = this.winnersPages.clientHeight;
+    this.winnersPages.style.height = `${height}px`;
     this.winnersBlock.replaceChildren();
+    let lastElement = 0;
     winners.forEach(async (el) => {
       const { name, color } = await this.asyncApi.getCar(String(el.id));
       this.addWinner(el.id, el.wins, el.time, name, color);
+      lastElement += 1;
+      if (lastElement === winners.length) this.winnersPages.style.height = 'auto';
     });
-    // this.winnersPages.style.height = 'auto';
   }
 
   public async addWinnerInfo(winner: Winner) {
