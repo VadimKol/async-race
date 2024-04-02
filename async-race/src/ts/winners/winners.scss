@@ -13,7 +13,7 @@
 
 .winners {
   position: relative;
-  padding: 45px 20px;
+  padding: 0 20px 45px;
   box-sizing: border-box;
   &-page {
     &-header {
@@ -70,7 +70,7 @@
   }
   &-controls {
     position: absolute;
-    bottom: -80px;
+    bottom: 0;
     &__prev {
       margin-right: 15px;
     }
