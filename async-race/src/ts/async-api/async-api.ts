@@ -68,18 +68,21 @@ class AsyncAPI {
     this.aborted = [];
   }
 
-  public async getCars() {
-    // try {
-    const response = await fetch('http://127.0.0.1:3000/garage', { method: 'GET', cache: 'no-store' });
+  public async getCars(currentPage: number, limit: number) {
+    const response = await fetch(`http://127.0.0.1:3000/garage?_page=${currentPage}&_limit=${limit}`, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+
+    const total = response.headers.get('X-Total-Count');
+
+    if (!total) throw new Error('Bad header');
 
     if (!(response.status === 200)) throw new Error('Response was not OK');
 
     this.cars = await response.json();
-    /*     } catch (e) {
-      if (e instanceof Error) console.log(`Error = ${e.message}`, e);
-    } */
 
-    return this.cars;
+    return { total, cars: this.cars };
   }
 
   public async getCar(carId: string) {
@@ -107,10 +110,10 @@ class AsyncAPI {
 
     if (!(response.status === 201)) throw new Error('Response was not OK');
 
-    const newCar: Car = await response.json();
+    // const newCar: Car = await response.json();
     this.isCreated = true;
 
-    return { isCreated: this.isCreated, carId: newCar.id };
+    return this.isCreated;
   }
 
   public async deleteCar(carId: string) {

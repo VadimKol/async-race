@@ -59,6 +59,8 @@ class Garage {
 
   private selectedCar: number;
 
+  private currentPage: number;
+
   constructor() {
     this.garageScreen = document.createElement('div');
     this.header = document.createElement('header');
@@ -75,6 +77,7 @@ class Garage {
     this.selectedCar = 0;
     this.util = new Util();
     this.winner = { id: -1, wins: 0, time: -1 };
+    this.currentPage = 1;
   }
 
   public create(): HTMLDivElement {
@@ -165,7 +168,7 @@ class Garage {
     const generateBtn = new Button('control-panel-functional__generate').createButton('Generate Cars');
     raceBtn.addEventListener('click', this.race.bind(this));
     resetBtn.addEventListener('click', this.reset.bind(this));
-    generateBtn.addEventListener('click', () => this.generateCars(createCarBtn, createName, createColorBtn));
+    generateBtn.addEventListener('click', () => this.generateCars());
     resetBtn.classList.add('control-panel-functional__reset_disabled');
 
     createBlock.append(createName);
@@ -187,7 +190,6 @@ class Garage {
   private feedGarage() {
     const garageTitle = document.createElement('h2');
     garageTitle.classList.add('garage__title');
-    garageTitle.append(`Garage (${4})`);
 
     const garageControls = document.createElement('div');
     garageControls.classList.add('garage-controls');
@@ -206,19 +208,15 @@ class Garage {
 
     this.addPage();
 
-    const defaultPage = this.garagePages.querySelector('.garage-page');
-    if (defaultPage) defaultPage.classList.add('garage-page_show');
-    this.addDefaultCars();
+    this.UpdateGaragePage();
   }
 
   private addPage() {
     const garagePage = document.createElement('div');
     garagePage.classList.add('garage-page');
-    garagePage.id = `gPage-${this.lastPageId}`;
 
     const garagePageTitle = document.createElement('h3');
     garagePageTitle.classList.add('garage-page__title');
-    garagePageTitle.append(`Page #${this.lastPageId}`);
 
     const cars = document.createElement('div');
     cars.classList.add('garage-page__cars');
@@ -232,38 +230,18 @@ class Garage {
     this.garagePages.append(garagePage);
   }
 
-  private movePage(sign: boolean): void {
-    const currentPage = this.garagePages.querySelector('.garage-page_show');
-    if (currentPage) {
-      const currentPageId = currentPage.id;
-      const [idName, idNumber] = currentPageId.split('-');
-      const newPageId = sign ? Number(idNumber) + 1 : Number(idNumber) - 1;
-      const newPage = document.getElementById(`${idName}-${newPageId}`);
-      if (newPage) {
-        currentPage.classList.remove('garage-page_show');
-        newPage.classList.add('garage-page_show');
-      }
+  private async movePage(whereTo: boolean) {
+    this.currentPage = whereTo ? this.currentPage + 1 : this.currentPage - 1;
+
+    if (this.currentPage < 1) {
+      this.currentPage = 1;
+      return;
     }
-  }
 
-  private async addDefaultCars() {
-    this.carsArr = await this.asyncApi.getCars();
+    const { cars } = await this.asyncApi.getCars(this.currentPage, MAX_CARS_ON_PAGE);
 
-    this.carsArr.forEach((el) => {
-      if (this.lastPage) {
-        this.totalCars += 1;
-        const title = this.garagePages.querySelector('.garage__title');
-        if (title) title.textContent = `Garage (${this.totalCars})`;
-
-        if (this.lastPage.children.length < MAX_CARS_ON_PAGE) {
-          Garage.addCar(el, this.lastPage);
-        } else {
-          this.addPage();
-          Garage.addCar(el, this.lastPage);
-        }
-      }
-    });
-    this.carsArr.length = 0;
+    if (cars.length === 0) this.currentPage = whereTo ? this.currentPage - 1 : this.currentPage + 1;
+    else this.UpdateGaragePage();
   }
 
   private static addCar(el: Car, page: HTMLDivElement) {
@@ -331,75 +309,26 @@ class Garage {
   }
 
   private async createCar(car: CarInput, createName: HTMLInputElement, createColorBtn: HTMLInputElement) {
-    const newAsyncCar = await this.asyncApi.createCar(car);
-    if (newAsyncCar.isCreated) {
+    if (await this.asyncApi.createCar(car)) {
       const carName = createName;
       const carColor = createColorBtn;
       carName.value = '';
       carColor.value = '#ffffff';
-
-      const currentPage = this.garagePages.querySelector('.garage-page_show');
-      if (!currentPage) throw new Error('There is no current page');
-      const carsOnCurrentPage = currentPage.querySelector('.garage-page__cars');
-      if (!(carsOnCurrentPage instanceof HTMLDivElement)) throw new Error('There is no cars on current page');
-
-      const allCarsOnAllPages: HTMLDivElement[] = [];
-      this.garagePages.querySelectorAll('.garage-page').forEach((el) => {
-        const carsOnPage = el.querySelector('.garage-page__cars');
-        if (carsOnPage instanceof HTMLDivElement) allCarsOnAllPages.push(carsOnPage);
-      });
-      let areFullofCars = true;
-
-      const newCar: Car = { name: car.name, color: car.color, id: newAsyncCar.carId };
-      this.totalCars += 1;
-      const title = this.garagePages.querySelector('.garage__title');
-
-      if (title) title.textContent = `Garage (${this.totalCars})`;
-
-      // добавляем машину на текущую страницу
-      // если фулл, то по остатками на других
-      // если фулл, то на новую страницу
-      // можно добавлять просто в конец и убрать кучу кода = незнаю
-      if (carsOnCurrentPage.children.length < MAX_CARS_ON_PAGE) Garage.addCar(newCar, carsOnCurrentPage);
-      else {
-        allCarsOnAllPages.every((el) => {
-          if (el.children.length < MAX_CARS_ON_PAGE) {
-            Garage.addCar(newCar, el);
-            areFullofCars = false;
-            return areFullofCars;
-          }
-          return areFullofCars;
-        });
-        if (areFullofCars) {
-          this.addPage();
-          if (this.lastPage) Garage.addCar(newCar, this.lastPage);
-        }
-      }
+      this.UpdateGaragePage();
     }
-    // TODO Update pageView
   }
 
-  private async generateCars(
-    createCarBtn: HTMLButtonElement,
-    createName: HTMLInputElement,
-    createColorBtn: HTMLInputElement,
-  ) {
-    const carName = createName;
-    const carColor = createColorBtn;
-
+  private async generateCars() {
     this.carsArr = Array.from({ length: GENERATE_CARS }, () => {
       return { name: this.util.getRandomName(), color: this.util.getRandomColor(), id: 0 };
     });
 
-    this.carsArr.forEach((el) => {
-      carName.value = el.name;
-      carColor.value = el.color;
-      createCarBtn.dispatchEvent(new Event('click'));
+    let lastElement = 0;
+    this.carsArr.forEach(async (el) => {
+      await this.asyncApi.createCar({ name: el.name, color: el.color });
+      lastElement += 1;
+      if (lastElement === this.carsArr.length) this.UpdateGaragePage();
     });
-
-    carName.value = '';
-    carColor.value = '#ffffff';
-    // this.carsArr.forEach((car) => this.asyncApi.createCar(car));
   }
 
   private async updateCar(
@@ -419,14 +348,7 @@ class Garage {
       updateColorBtn.classList.add('control-panel-update__color_disabled');
       updateCarBtn.classList.add('control-panel-update__upt_disabled');
 
-      const carObjectInDOM = document.getElementById(`${car.id}`);
-      if (carObjectInDOM) {
-        const carNameInDOM = carObjectInDOM.querySelector('.car-controls__name');
-        if (carNameInDOM) carNameInDOM.textContent = car.name;
-
-        const carImgInDOM = carObjectInDOM.querySelector('.track__car-img');
-        if (carImgInDOM) carImgInDOM.setAttributeNS(null, 'fill', car.color);
-      }
+      this.UpdateGaragePage();
     }
   }
 
@@ -463,10 +385,7 @@ class Garage {
     if (await this.asyncApi.deleteCar(currentCar.id)) {
       this.winner.id = Number(currentCar.id);
       document.body.dispatchEvent(new Event('deleteWinner'));
-      this.totalCars -= 1;
-      const title = this.garagePages.querySelector('.garage__title');
-      if (title) title.textContent = `Garage (${this.totalCars})`;
-      currentCar.remove();
+      this.UpdateGaragePage();
 
       if (Number(currentCar.id) === this.selectedCar) {
         this.selectedCar = 0;
@@ -487,8 +406,6 @@ class Garage {
         }
       }
     }
-
-    // TODO update pageView
   }
 
   private async selectCar(selectButton: HTMLButtonElement) {
@@ -518,21 +435,21 @@ class Garage {
   }
 
   private AreAllStartButtonsOn(): boolean {
-    const currentPage = this.garagePages.querySelector('.garage-page_show');
+    const currentPage = this.garagePages.querySelector('.garage-page');
     if (!currentPage) return false;
 
     return !currentPage.querySelector('.track__start_disabled');
   }
 
   private AreAllRestartButtonsOn(): boolean {
-    const currentPage = this.garagePages.querySelector('.garage-page_show');
+    const currentPage = this.garagePages.querySelector('.garage-page');
     if (!currentPage) return false;
 
     return !currentPage.querySelector('.track__restart_disabled');
   }
 
   private AreAllRestartButtonsOff(): boolean {
-    const currentPage = this.garagePages.querySelector('.garage-page_show');
+    const currentPage = this.garagePages.querySelector('.garage-page');
     if (!currentPage) return false;
 
     const carsRestartButtons = Array.from(currentPage.querySelectorAll('.track__restart'));
@@ -651,7 +568,7 @@ class Garage {
   }
 
   private async race() {
-    const currentPage = this.garagePages.querySelector('.garage-page_show');
+    const currentPage = this.garagePages.querySelector('.garage-page');
     if (!currentPage) return;
 
     const cars = currentPage.querySelector('.garage-page__cars');
@@ -699,7 +616,7 @@ class Garage {
   }
 
   private reset() {
-    const currentPage = this.garagePages.querySelector('.garage-page_show');
+    const currentPage = this.garagePages.querySelector('.garage-page');
     if (!currentPage) return;
 
     const cars = currentPage.querySelector('.garage-page__cars');
@@ -711,6 +628,25 @@ class Garage {
 
     carsRestartButtons.forEach((el) => {
       el.dispatchEvent(new Event('click', { bubbles: true }));
+    });
+  }
+
+  private async UpdateGaragePage() {
+    const { total, cars } = await this.asyncApi.getCars(this.currentPage, MAX_CARS_ON_PAGE);
+    const garageTitle = this.garagePages.querySelector('.garage__title');
+    if (garageTitle) garageTitle.textContent = `Garage (${total})`;
+    const garagePageTitle = this.garagePages.querySelector('.garage-page__title');
+    if (garagePageTitle) garagePageTitle.textContent = `Page #${this.currentPage}`;
+    const height = this.garagePages.clientHeight;
+    this.garagePages.style.height = `${height}px`;
+    const carsOnPage = this.garagePages.querySelector('.garage-page__cars');
+    if (!(carsOnPage instanceof HTMLDivElement)) return;
+    carsOnPage.replaceChildren();
+    let lastElement = 0;
+    cars.forEach(async (el) => {
+      Garage.addCar(el, carsOnPage);
+      lastElement += 1;
+      if (lastElement === cars.length) this.garagePages.style.height = 'auto';
     });
   }
 
