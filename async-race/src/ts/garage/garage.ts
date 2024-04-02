@@ -9,11 +9,6 @@ interface Car {
   id: number;
 }
 
-interface CarInput {
-  name: string;
-  color: string;
-}
-
 interface CarWithSpeed {
   animation: number;
   id: number;
@@ -39,7 +34,9 @@ class Garage {
 
   private controlPanel: HTMLDivElement;
 
-  private garagePages: HTMLDivElement;
+  private garage: HTMLDivElement;
+
+  private garagePage: HTMLDivElement;
 
   private winnerMgs: HTMLParagraphElement;
 
@@ -51,12 +48,6 @@ class Garage {
 
   private util: Util;
 
-  private lastPage: HTMLDivElement | null;
-
-  private lastPageId: number;
-
-  private totalCars: number;
-
   private selectedCar: number;
 
   private currentPage: number;
@@ -67,13 +58,11 @@ class Garage {
     this.main = document.createElement('main');
     this.nav = document.createElement('nav');
     this.controlPanel = document.createElement('div');
-    this.garagePages = document.createElement('div');
+    this.garage = document.createElement('div');
+    this.garagePage = document.createElement('div');
     this.winnerMgs = document.createElement('p');
     this.carsArr = [];
     this.asyncApi = new AsyncAPI();
-    this.lastPage = null;
-    this.lastPageId = 1;
-    this.totalCars = 0;
     this.selectedCar = 0;
     this.util = new Util();
     this.winner = { id: -1, wins: 0, time: -1 };
@@ -86,8 +75,8 @@ class Garage {
     this.main.classList.add('main');
     this.nav.classList.add('nav');
     this.controlPanel.classList.add('control-panel');
-    this.garagePages.classList.add('garage');
-    this.garagePages.addEventListener('click', this.whichButton.bind(this));
+    this.garage.classList.add('garage');
+    this.garage.addEventListener('click', this.whichButton.bind(this));
     this.winnerMgs.classList.add('winner-msg');
 
     const toGarageBtn = new Button('nav__garage').createButton('To Garage');
@@ -105,7 +94,7 @@ class Garage {
     this.header.append(this.nav);
 
     this.main.append(this.controlPanel);
-    this.main.append(this.garagePages);
+    this.main.append(this.garage);
 
     this.garageScreen.append(this.header);
     this.garageScreen.append(this.main);
@@ -127,11 +116,7 @@ class Garage {
     createColorBtn.value = '#ffffff';
 
     const createCarBtn = new Button('control-panel-create__crt').createButton('Create');
-    // createName это ссылка на объект в DOM, его не нужно снова получать внутри хэндлера!
-    // TODO переделать
-    createCarBtn.addEventListener('click', () =>
-      this.createCar({ name: createName.value, color: createColorBtn.value }, createName, createColorBtn),
-    );
+    createCarBtn.addEventListener('click', () => this.createCar(createName, createColorBtn));
 
     const updateBlock = document.createElement('div');
     updateBlock.classList.add('control-panel-update');
@@ -146,15 +131,7 @@ class Garage {
     updateColorBtn.value = '#ffffff';
 
     const updateCarBtn = new Button('control-panel-update__upt').createButton('Update');
-    // TODO переделать
-    updateCarBtn.addEventListener('click', () =>
-      this.updateCar(
-        { name: updateName.value, color: updateColorBtn.value, id: this.selectedCar },
-        updateName,
-        updateColorBtn,
-        updateCarBtn,
-      ),
-    );
+    updateCarBtn.addEventListener('click', () => this.updateCar(updateName, updateColorBtn, updateCarBtn));
 
     updateName.classList.add('control-panel-update__name_disabled');
     updateColorBtn.classList.add('control-panel-update__color_disabled');
@@ -168,7 +145,7 @@ class Garage {
     const generateBtn = new Button('control-panel-functional__generate').createButton('Generate Cars');
     raceBtn.addEventListener('click', this.race.bind(this));
     resetBtn.addEventListener('click', this.reset.bind(this));
-    generateBtn.addEventListener('click', () => this.generateCars());
+    generateBtn.addEventListener('click', this.generateCars.bind(this));
     resetBtn.classList.add('control-panel-functional__reset_disabled');
 
     createBlock.append(createName);
@@ -191,29 +168,7 @@ class Garage {
     const garageTitle = document.createElement('h2');
     garageTitle.classList.add('garage__title');
 
-    const garageControls = document.createElement('div');
-    garageControls.classList.add('garage-controls');
-
-    const prevPageBtn = new Button('garage-controls__prev').createButton('<-');
-    const nextPageBtn = new Button('garage-controls__next').createButton('->');
-    // TODO переделать
-    prevPageBtn.addEventListener('click', () => this.movePage(false));
-    nextPageBtn.addEventListener('click', () => this.movePage(true));
-
-    garageControls.append(prevPageBtn);
-    garageControls.append(nextPageBtn);
-
-    this.garagePages.append(garageTitle);
-    this.garagePages.append(garageControls);
-
-    this.addPage();
-
-    this.UpdateGaragePage();
-  }
-
-  private addPage() {
-    const garagePage = document.createElement('div');
-    garagePage.classList.add('garage-page');
+    this.garagePage.classList.add('garage-page');
 
     const garagePageTitle = document.createElement('h3');
     garagePageTitle.classList.add('garage-page__title');
@@ -221,13 +176,26 @@ class Garage {
     const cars = document.createElement('div');
     cars.classList.add('garage-page__cars');
 
-    garagePage.append(garagePageTitle);
-    garagePage.append(cars);
+    const garageControls = document.createElement('div');
+    garageControls.classList.add('garage-controls');
 
-    this.lastPageId += 1;
-    this.lastPage = cars;
+    const prevPageBtn = new Button('garage-controls__prev').createButton('<-');
+    const nextPageBtn = new Button('garage-controls__next').createButton('->');
 
-    this.garagePages.append(garagePage);
+    prevPageBtn.addEventListener('click', () => this.movePage(false));
+    nextPageBtn.addEventListener('click', () => this.movePage(true));
+
+    garageControls.append(prevPageBtn);
+    garageControls.append(nextPageBtn);
+
+    this.garagePage.append(garagePageTitle);
+    this.garagePage.append(cars);
+
+    this.garage.append(garageTitle);
+    this.garage.append(garageControls);
+    this.garage.append(this.garagePage);
+
+    this.UpdateGaragePage();
   }
 
   private async movePage(whereTo: boolean) {
@@ -308,8 +276,8 @@ class Garage {
     return carImg;
   }
 
-  private async createCar(car: CarInput, createName: HTMLInputElement, createColorBtn: HTMLInputElement) {
-    if (await this.asyncApi.createCar(car)) {
+  private async createCar(createName: HTMLInputElement, createColorBtn: HTMLInputElement) {
+    if (await this.asyncApi.createCar({ name: createName.value, color: createColorBtn.value, id: 0 })) {
       const carName = createName;
       const carColor = createColorBtn;
       carName.value = '';
@@ -325,19 +293,18 @@ class Garage {
 
     let lastElement = 0;
     this.carsArr.forEach(async (el) => {
-      await this.asyncApi.createCar({ name: el.name, color: el.color });
+      await this.asyncApi.createCar(el);
       lastElement += 1;
       if (lastElement === this.carsArr.length) this.UpdateGaragePage();
     });
   }
 
   private async updateCar(
-    car: Car,
     updateName: HTMLInputElement,
     updateColorBtn: HTMLInputElement,
     updateCarBtn: HTMLButtonElement,
   ) {
-    if (await this.asyncApi.updateCar(car)) {
+    if (await this.asyncApi.updateCar({ name: updateName.value, color: updateColorBtn.value, id: this.selectedCar })) {
       const carName = updateName;
       const carColor = updateColorBtn;
       carName.value = '';
@@ -357,7 +324,6 @@ class Garage {
 
     if (!(target instanceof HTMLButtonElement)) return;
 
-    // TODO не по textContent
     switch (target.textContent) {
       case 'Remove':
         this.removeCar(target);
@@ -435,34 +401,22 @@ class Garage {
   }
 
   private AreAllStartButtonsOn(): boolean {
-    const currentPage = this.garagePages.querySelector('.garage-page');
-    if (!currentPage) return false;
-
-    return !currentPage.querySelector('.track__start_disabled');
+    return !this.garagePage.querySelector('.track__start_disabled');
   }
 
   private AreAllRestartButtonsOn(): boolean {
-    const currentPage = this.garagePages.querySelector('.garage-page');
-    if (!currentPage) return false;
-
-    return !currentPage.querySelector('.track__restart_disabled');
+    return !this.garagePage.querySelector('.track__restart_disabled');
   }
 
   private AreAllRestartButtonsOff(): boolean {
-    const currentPage = this.garagePages.querySelector('.garage-page');
-    if (!currentPage) return false;
+    const restartBtns = Array.from(this.garagePage.querySelectorAll('.track__restart'));
 
-    const carsRestartButtons = Array.from(currentPage.querySelectorAll('.track__restart'));
-
-    return (
-      carsRestartButtons.length ===
-      carsRestartButtons.filter((el) => el.classList.contains('track__restart_disabled')).length
-    );
+    return restartBtns.length === restartBtns.filter((el) => el.classList.contains('track__restart_disabled')).length;
   }
 
   private PaginationButtonsStateChanger(turnOn: boolean): void {
-    const prevPageBtn = this.garagePages.querySelector('.garage-controls__prev');
-    const nextPageBtn = this.garagePages.querySelector('.garage-controls__next');
+    const prevPageBtn = this.garage.querySelector('.garage-controls__prev');
+    const nextPageBtn = this.garage.querySelector('.garage-controls__next');
     if (!prevPageBtn) return;
     if (!nextPageBtn) return;
     if (turnOn) {
@@ -503,9 +457,6 @@ class Garage {
     const restartBtn = parent.querySelector('.track__restart');
     if (restartBtn) restartBtn.classList.remove('track__restart_disabled');
 
-    /*     const resetButton = document.querySelector('.control-panel-functional__reset');
-    if (resetButton) resetButton.classList.remove('control-panel-functional__reset_disabled'); */
-
     if (this.AreAllRestartButtonsOn()) {
       const resetButton = document.querySelector('.control-panel-functional__reset');
       if (resetButton) resetButton.classList.remove('control-panel-functional__reset_disabled');
@@ -518,12 +469,8 @@ class Garage {
         carImg.classList.add('stop-car');
         carImg.classList.add('track__car-img_fire');
       } else {
-        // carImg.classList.add('car-finished');
         returnvalue.animation = animationTime;
         returnvalue.id = Number(currentCar.id);
-        /*       carImg.style.animationDuration = `${(animationTime / (parent.clientWidth - 414)) * 184}ms`;
-          carImg.classList.add('car-to-finish');
-          carImg.classList.add('car-on-finish'); */
       }
       this.asyncApi.aborted = this.asyncApi.aborted.filter((el) => el.carId !== Number(currentCar.id));
     } catch (err) {
@@ -568,13 +515,10 @@ class Garage {
   }
 
   private async race() {
-    const currentPage = this.garagePages.querySelector('.garage-page');
-    if (!currentPage) return;
-
-    const cars = currentPage.querySelector('.garage-page__cars');
+    const cars = this.garagePage.querySelector('.garage-page__cars');
     if (!cars) return;
 
-    const carsStartButtons: NodeListOf<HTMLButtonElement> = currentPage.querySelectorAll('.track__start');
+    const carsStartButtons: NodeListOf<HTMLButtonElement> = this.garagePage.querySelectorAll('.track__start');
 
     const promises: Promise<CarWithSpeed>[] = [];
 
@@ -616,13 +560,10 @@ class Garage {
   }
 
   private reset() {
-    const currentPage = this.garagePages.querySelector('.garage-page');
-    if (!currentPage) return;
-
-    const cars = currentPage.querySelector('.garage-page__cars');
+    const cars = this.garagePage.querySelector('.garage-page__cars');
     if (!cars) return;
 
-    const carsRestartButtons = Array.from(currentPage.querySelectorAll('.track__restart')).filter(
+    const carsRestartButtons = Array.from(this.garagePage.querySelectorAll('.track__restart')).filter(
       (el) => !el.classList.contains('track__restart_disabled'),
     );
 
@@ -633,20 +574,20 @@ class Garage {
 
   private async UpdateGaragePage() {
     const { total, cars } = await this.asyncApi.getCars(this.currentPage, MAX_CARS_ON_PAGE);
-    const garageTitle = this.garagePages.querySelector('.garage__title');
+    const garageTitle = this.garage.querySelector('.garage__title');
     if (garageTitle) garageTitle.textContent = `Garage (${total})`;
-    const garagePageTitle = this.garagePages.querySelector('.garage-page__title');
+    const garagePageTitle = this.garage.querySelector('.garage-page__title');
     if (garagePageTitle) garagePageTitle.textContent = `Page #${this.currentPage}`;
-    const height = this.garagePages.clientHeight;
-    this.garagePages.style.height = `${height}px`;
-    const carsOnPage = this.garagePages.querySelector('.garage-page__cars');
+    const height = this.garage.clientHeight;
+    this.garage.style.height = `${height}px`;
+    const carsOnPage = this.garage.querySelector('.garage-page__cars');
     if (!(carsOnPage instanceof HTMLDivElement)) return;
     carsOnPage.replaceChildren();
     let lastElement = 0;
     cars.forEach(async (el) => {
       Garage.addCar(el, carsOnPage);
       lastElement += 1;
-      if (lastElement === cars.length) this.garagePages.style.height = 'auto';
+      if (lastElement === cars.length) this.garage.style.height = 'auto';
     });
   }
 

@@ -4,11 +4,6 @@ interface Car {
   id: number;
 }
 
-interface CarInput {
-  name: string;
-  color: string;
-}
-
 interface Speed {
   velocity: number;
   distance: number;
@@ -98,19 +93,18 @@ class AsyncAPI {
     return this.car;
   }
 
-  public async createCar(car: CarInput) {
+  public async createCar(car: Car) {
     this.isCreated = false;
 
     const response = await fetch('http://127.0.0.1:3000/garage', {
       method: 'POST',
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(car),
+      body: JSON.stringify({ name: car.name, color: car.color }),
     });
 
     if (!(response.status === 201)) throw new Error('Response was not OK');
 
-    // const newCar: Car = await response.json();
     this.isCreated = true;
 
     return this.isCreated;
@@ -179,11 +173,7 @@ class AsyncAPI {
   public async driveCar(carId: string) {
     const control = new AbortController();
     this.aborted.push({ controller: control, carId: Number(carId) });
-    // try {
 
-    // аборт и 500 ошибка
-    // но 500 ошибка не ловится выше, все норм
-    // но можно было бы перехватывать здесь все 3 случая, а аборт прокидывать выше
     const response = await fetch(`http://127.0.0.1:3000/engine?id=${carId}&status=drive`, {
       method: 'PATCH',
       cache: 'no-store',
@@ -193,9 +183,6 @@ class AsyncAPI {
     if (response.status === 500) return false;
 
     if (!(response.status === 200)) throw new Error('Response was not OK');
-    /*     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') console.log('Car was stopped');
-    } */
 
     return true;
   }
