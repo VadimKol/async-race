@@ -305,6 +305,7 @@ class Garage {
     updateCarBtn: HTMLButtonElement,
   ) {
     if (await this.asyncApi.updateCar({ name: updateName.value, color: updateColorBtn.value, id: this.selectedCar })) {
+      document.body.dispatchEvent(new Event('updateWinner'));
       const carName = updateName;
       const carColor = updateColorBtn;
       carName.value = '';

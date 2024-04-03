@@ -281,6 +281,10 @@ class Winners {
     }
   }
 
+  public async updateWinnerInfo() {
+    this.UpdateWinnersPage(this.sortObj.type, this.sortObj.order);
+  }
+
   private async movePage(whereTo: boolean) {
     this.currentPage = whereTo ? this.currentPage + 1 : this.currentPage - 1;
 

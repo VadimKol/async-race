@@ -16,6 +16,7 @@ class App {
     this.body.append(winners.create());
     this.body.addEventListener('createWinner', () => winners.addWinnerInfo(garage.winner));
     this.body.addEventListener('deleteWinner', () => winners.deleteWinnerInfo(garage.winner));
+    this.body.addEventListener('updateWinner', () => winners.updateWinnerInfo());
   }
 }
 
