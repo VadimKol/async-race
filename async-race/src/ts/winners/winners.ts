@@ -75,15 +75,11 @@ class Winners {
 
     this.feedWinners();
 
-    this.nav.append(toGarageBtn);
-    this.nav.append(toWinnersBtn);
-
+    this.nav.append(toGarageBtn, toWinnersBtn);
     this.header.append(this.nav);
-
     this.main.append(this.winnersPages);
+    this.winnersScreen.append(this.header, this.main);
 
-    this.winnersScreen.append(this.header);
-    this.winnersScreen.append(this.main);
     this.UpdateWinnersPage(this.sortObj.type, this.sortObj.order);
     return this.winnersScreen;
   }
@@ -100,11 +96,8 @@ class Winners {
     prevPageBtn.addEventListener('click', () => this.movePage(false));
     nextPageBtn.addEventListener('click', () => this.movePage(true));
 
-    winnersControls.append(prevPageBtn);
-    winnersControls.append(nextPageBtn);
-
-    this.winnersPages.append(winnersTitle);
-    this.winnersPages.append(winnersControls);
+    winnersControls.append(prevPageBtn, nextPageBtn);
+    this.winnersPages.append(winnersTitle, winnersControls);
     this.addPage();
   }
 
@@ -142,10 +135,7 @@ class Winners {
       }
     });
 
-    winnersPage.append(winnersPageTitle);
-    winnersPage.append(winnersPageHeader);
-    winnersPage.append(this.winnersBlock);
-
+    winnersPage.append(winnersPageTitle, winnersPageHeader, this.winnersBlock);
     this.winnersPages.append(winnersPage);
   }
 

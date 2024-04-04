@@ -77,17 +77,10 @@ class Garage {
     this.feedControlPanel();
     this.feedGarage();
 
-    this.nav.append(toGarageBtn);
-    this.nav.append(toWinnersBtn);
-
+    this.nav.append(toGarageBtn, toWinnersBtn);
     this.header.append(this.nav);
-
-    this.main.append(this.controlPanel);
-    this.main.append(this.garage);
-
-    this.garageScreen.append(this.header);
-    this.garageScreen.append(this.main);
-    this.garageScreen.append(this.winnerMgs);
+    this.main.append(this.controlPanel, this.garage);
+    this.garageScreen.append(this.header, this.main, this.winnerMgs);
     return this.garageScreen;
   }
 
@@ -132,25 +125,15 @@ class Garage {
     const raceBtn = new Button('control-panel-functional__race').createButton('Race');
     const resetBtn = new Button('control-panel-functional__reset').createButton('Reset');
     const generateBtn = new Button('control-panel-functional__generate').createButton('Generate Cars');
+    resetBtn.classList.add('control-panel-functional__reset_disabled');
     raceBtn.addEventListener('click', this.race.bind(this));
     resetBtn.addEventListener('click', this.reset.bind(this));
     generateBtn.addEventListener('click', this.generateCars.bind(this));
-    resetBtn.classList.add('control-panel-functional__reset_disabled');
 
-    createBlock.append(createName);
-    createBlock.append(createColorBtn);
-    createBlock.append(createCarBtn);
-    this.controlPanel.append(createBlock);
-
-    updateBlock.append(updateName);
-    updateBlock.append(updateColorBtn);
-    updateBlock.append(updateCarBtn);
-    this.controlPanel.append(updateBlock);
-
-    functionalBlock.append(raceBtn);
-    functionalBlock.append(resetBtn);
-    functionalBlock.append(generateBtn);
-    this.controlPanel.append(functionalBlock);
+    createBlock.append(createName, createColorBtn, createCarBtn);
+    updateBlock.append(updateName, updateColorBtn, updateCarBtn);
+    functionalBlock.append(raceBtn, resetBtn, generateBtn);
+    this.controlPanel.append(createBlock, updateBlock, functionalBlock);
   }
 
   private feedGarage() {
@@ -174,15 +157,9 @@ class Garage {
     prevPageBtn.addEventListener('click', () => this.movePage(false));
     nextPageBtn.addEventListener('click', () => this.movePage(true));
 
-    garageControls.append(prevPageBtn);
-    garageControls.append(nextPageBtn);
-
-    this.garagePage.append(garagePageTitle);
-    this.garagePage.append(cars);
-
-    this.garage.append(garageTitle);
-    this.garage.append(garageControls);
-    this.garage.append(this.garagePage);
+    garageControls.append(prevPageBtn, nextPageBtn);
+    this.garagePage.append(garagePageTitle, cars);
+    this.garage.append(garageTitle, garageControls, this.garagePage);
 
     this.updateGaragePage();
   }
@@ -226,18 +203,9 @@ class Garage {
     const finishImg = document.createElement('div');
     finishImg.classList.add('track__finish');
 
-    track.append(startBtn);
-    track.append(restartBtn);
-    track.append(Garage.setCarImg(el.color));
-    track.append(finishImg);
-
-    carControls.append(selectCarBtn);
-    carControls.append(removeCarBtn);
-    carControls.append(carName);
-
-    car.append(carControls);
-    car.append(track);
-
+    track.append(startBtn, restartBtn, Garage.setCarImg(el.color), finishImg);
+    carControls.append(selectCarBtn, removeCarBtn, carName);
+    car.append(carControls, track);
     page.append(car);
   }
 
