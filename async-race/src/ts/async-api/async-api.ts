@@ -1,8 +1,4 @@
-interface Car {
-  name: string;
-  color: string;
-  id: number;
-}
+import { Car, Winner } from '../util/types';
 
 interface Speed {
   velocity: number;
@@ -12,12 +8,6 @@ interface Speed {
 interface Aborted {
   controller: AbortController;
   carId: number;
-}
-
-interface Winner {
-  id: number;
-  wins: number;
-  time: number;
 }
 
 class AsyncAPI {

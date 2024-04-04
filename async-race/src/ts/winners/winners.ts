@@ -1,12 +1,7 @@
 import './winners.scss';
 import Button from '../components/button/button';
 import AsyncAPI from '../async-api/async-api';
-
-interface Winner {
-  id: number;
-  wins: number;
-  time: number;
-}
+import { Winner } from '../util/types';
 
 const MAX_WINNERS_ON_PAGE = 10;
 

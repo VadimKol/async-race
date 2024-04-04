@@ -2,22 +2,11 @@ import Button from '../components/button/button';
 import './garage.scss';
 import AsyncAPI from '../async-api/async-api';
 import Util from '../util/util';
-
-interface Car {
-  name: string;
-  color: string;
-  id: number;
-}
+import { Car, Winner } from '../util/types';
 
 interface CarWithSpeed {
   animation: number;
   id: number;
-}
-
-interface Winner {
-  id: number;
-  wins: number;
-  time: number;
 }
 
 const MAX_CARS_ON_PAGE = 7;
