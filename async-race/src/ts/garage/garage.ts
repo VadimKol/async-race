@@ -530,10 +530,10 @@ class Garage {
         const allSelectBtns: NodeListOf<HTMLButtonElement> = this.garagePage.querySelectorAll('.car-controls__select');
         const allRemoveBtns: NodeListOf<HTMLButtonElement> = this.garagePage.querySelectorAll('.car-controls__remove');
         allSelectBtns.forEach((el) => {
-          el.classList.add('car-controls__select_disabled');
+          el.classList.remove('car-controls__select_disabled');
         });
         allRemoveBtns.forEach((el) => {
-          el.classList.add('car-controls__remove_disabled');
+          el.classList.remove('car-controls__remove_disabled');
         });
         this.unblockButtons();
       }
