@@ -180,7 +180,7 @@ class AsyncAPI {
       signal: control.signal,
     });
 
-    if (response.status === 500) return false;
+    if (response.status === 500 || response.status === 404) return false;
 
     if (!(response.status === 200)) throw new Error('Response was not OK');
 

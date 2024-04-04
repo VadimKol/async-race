@@ -512,10 +512,10 @@ class Garage {
     const carImg = parent.querySelector('.track__car-img');
     if (!(carImg instanceof SVGSVGElement)) return;
 
+    const index = this.asyncApi.aborted.map((el) => el.carId).indexOf(Number(currentCar.id));
+    const requestToAbort = this.asyncApi.aborted[index];
+    if (requestToAbort) requestToAbort.controller.abort();
     if (await this.asyncApi.stopEngine(currentCar.id)) {
-      const index = this.asyncApi.aborted.map((el) => el.carId).indexOf(Number(currentCar.id));
-      const requestToAbort = this.asyncApi.aborted[index];
-      if (requestToAbort) requestToAbort.controller.abort();
       carImg.classList.add('stop-car');
       carImg.classList.remove('car-finished');
       carImg.classList.remove('car-drive');
