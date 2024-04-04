@@ -195,7 +195,7 @@ class Garage {
     this.garage.append(garageControls);
     this.garage.append(this.garagePage);
 
-    this.UpdateGaragePage();
+    this.updateGaragePage();
   }
 
   private async movePage(whereTo: boolean) {
@@ -209,7 +209,7 @@ class Garage {
     const { cars } = await this.asyncApi.getCars(this.currentPage, MAX_CARS_ON_PAGE);
 
     if (cars.length === 0) this.currentPage = whereTo ? this.currentPage - 1 : this.currentPage + 1;
-    else this.UpdateGaragePage();
+    else this.updateGaragePage();
   }
 
   private static addCar(el: Car, page: HTMLDivElement) {
@@ -282,7 +282,7 @@ class Garage {
       const carColor = createColorBtn;
       carName.value = '';
       carColor.value = '#ffffff';
-      this.UpdateGaragePage();
+      this.updateGaragePage();
     }
   }
 
@@ -295,7 +295,7 @@ class Garage {
     this.carsArr.forEach(async (el) => {
       await this.asyncApi.createCar(el);
       lastElement += 1;
-      if (lastElement === this.carsArr.length) this.UpdateGaragePage();
+      if (lastElement === this.carsArr.length) this.updateGaragePage();
     });
   }
 
@@ -316,29 +316,33 @@ class Garage {
       updateColorBtn.classList.add('control-panel-update__color_disabled');
       updateCarBtn.classList.add('control-panel-update__upt_disabled');
 
-      this.UpdateGaragePage();
+      this.updateGaragePage();
     }
   }
 
-  private whichButton(event: MouseEvent): void {
+  private async whichButton(event: MouseEvent) {
     const { target } = event;
 
     if (!(target instanceof HTMLButtonElement)) return;
 
-    switch (target.textContent) {
-      case 'Remove':
-        this.removeCar(target);
-        break;
-      case 'Select':
-        this.selectCar(target);
-        break;
-      case 'S':
-        this.driveCar(target);
-        break;
-      case 'R':
-        this.resetCar(target);
-        break;
-      default:
+    try {
+      switch (target.textContent) {
+        case 'Remove':
+          await this.removeCar(target);
+          break;
+        case 'Select':
+          await this.selectCar(target);
+          break;
+        case 'S':
+          await this.driveCar(target, false);
+          break;
+        case 'R':
+          await this.resetCar(target);
+          break;
+        default:
+      }
+    } catch (err) {
+      // continue regardless of error
     }
   }
 
@@ -352,7 +356,7 @@ class Garage {
     if (await this.asyncApi.deleteCar(currentCar.id)) {
       this.winner.id = Number(currentCar.id);
       document.body.dispatchEvent(new Event('deleteWinner'));
-      this.UpdateGaragePage();
+      this.updateGaragePage();
 
       if (Number(currentCar.id) === this.selectedCar) {
         this.selectedCar = 0;
@@ -401,21 +405,21 @@ class Garage {
     }
   }
 
-  private AreAllStartButtonsOn(): boolean {
+  private areAllStartButtonsOn(): boolean {
     return !this.garagePage.querySelector('.track__start_disabled');
   }
 
-  private AreAllRestartButtonsOn(): boolean {
+  private areAllRestartButtonsOn(): boolean {
     return !this.garagePage.querySelector('.track__restart_disabled');
   }
 
-  private AreAllRestartButtonsOff(): boolean {
+  private areAllRestartButtonsOff(): boolean {
     const restartBtns = Array.from(this.garagePage.querySelectorAll('.track__restart'));
 
     return restartBtns.length === restartBtns.filter((el) => el.classList.contains('track__restart_disabled')).length;
   }
 
-  private PaginationButtonsStateChanger(turnOn: boolean): void {
+  private paginationButtonsStateChanger(turnOn: boolean): void {
     const prevPageBtn = this.garage.querySelector('.garage-controls__prev');
     const nextPageBtn = this.garage.querySelector('.garage-controls__next');
     if (!prevPageBtn) return;
@@ -429,8 +433,8 @@ class Garage {
     }
   }
 
-  private async driveCar(startButton: HTMLButtonElement) {
-    this.PaginationButtonsStateChanger(false);
+  private async driveCar(startButton: HTMLButtonElement, isRace: boolean) {
+    this.paginationButtonsStateChanger(false);
 
     const returnvalue: CarWithSpeed = { animation: -1, id: -1 };
 
@@ -444,6 +448,17 @@ class Garage {
     const currentCar = parent.parentElement;
     if (!currentCar) return returnvalue;
 
+    const allSelectBtns: NodeListOf<HTMLButtonElement> = this.garagePage.querySelectorAll('.car-controls__select');
+    const allRemoveBtns: NodeListOf<HTMLButtonElement> = this.garagePage.querySelectorAll('.car-controls__remove');
+    allSelectBtns.forEach((el) => {
+      el.classList.add('car-controls__select_disabled');
+    });
+    allRemoveBtns.forEach((el) => {
+      el.classList.add('car-controls__remove_disabled');
+    });
+
+    this.blockButtons();
+
     const animationTime = await this.asyncApi.startEngine(currentCar.id);
 
     document.documentElement.style.setProperty('--track-width', `${parent.clientWidth}px`);
@@ -455,28 +470,29 @@ class Garage {
 
     carImg.classList.add('car-drive');
     carImg.classList.add('car-finished');
-    const restartBtn = parent.querySelector('.track__restart');
-    if (restartBtn) restartBtn.classList.remove('track__restart_disabled');
-
-    if (this.AreAllRestartButtonsOn()) {
-      const resetButton = document.querySelector('.control-panel-functional__reset');
-      if (resetButton) resetButton.classList.remove('control-panel-functional__reset_disabled');
+    if (!isRace) {
+      const restartBtn = parent.querySelector('.track__restart');
+      if (restartBtn) restartBtn.classList.remove('track__restart_disabled');
     }
 
     try {
       const isFinished = await this.asyncApi.driveCar(currentCar.id);
 
+      this.asyncApi.aborted = this.asyncApi.aborted.filter((el) => el.carId !== Number(currentCar.id));
       if (!isFinished) {
         carImg.classList.add('stop-car');
         carImg.classList.add('track__car-img_fire');
+        throw new Error('Engine was broken');
       } else {
         returnvalue.animation = animationTime;
         returnvalue.id = Number(currentCar.id);
       }
-      this.asyncApi.aborted = this.asyncApi.aborted.filter((el) => el.carId !== Number(currentCar.id));
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError')
-        this.asyncApi.aborted = this.asyncApi.aborted.filter((el) => el.carId !== Number(currentCar.id));
+      if (err instanceof Error) {
+        if (err.name === 'AbortError')
+          this.asyncApi.aborted = this.asyncApi.aborted.filter((el) => el.carId !== Number(currentCar.id));
+        if (err.message === 'Engine was broken') throw new Error('Engine was broken');
+      }
     }
     return returnvalue;
   }
@@ -484,7 +500,7 @@ class Garage {
   private async resetCar(resetButton: HTMLButtonElement) {
     const parent = resetButton.parentElement;
     resetButton.classList.add('track__restart_disabled');
-    if (this.AreAllRestartButtonsOff()) {
+    if (this.areAllRestartButtonsOff()) {
       const resetAllBtn = document.querySelector('.control-panel-functional__reset');
       if (resetAllBtn) resetAllBtn.classList.add('control-panel-functional__reset_disabled');
     }
@@ -507,38 +523,83 @@ class Garage {
       carImg.classList.remove('stop-car');
       const startButton = parent.querySelector('.track__start');
       if (startButton) startButton.classList.remove('track__start_disabled');
-      if (this.AreAllStartButtonsOn()) {
+      if (this.areAllStartButtonsOn()) {
         const raceButton = document.querySelector('.control-panel-functional__race');
         if (raceButton) raceButton.classList.remove('control-panel-functional__race_disabled');
-        this.PaginationButtonsStateChanger(true);
+        this.paginationButtonsStateChanger(true);
+        const allSelectBtns: NodeListOf<HTMLButtonElement> = this.garagePage.querySelectorAll('.car-controls__select');
+        const allRemoveBtns: NodeListOf<HTMLButtonElement> = this.garagePage.querySelectorAll('.car-controls__remove');
+        allSelectBtns.forEach((el) => {
+          el.classList.add('car-controls__select_disabled');
+        });
+        allRemoveBtns.forEach((el) => {
+          el.classList.add('car-controls__remove_disabled');
+        });
+        this.unblockButtons();
       }
     }
   }
 
-  private async race() {
-    const cars = this.garagePage.querySelector('.garage-page__cars');
-    if (!cars) return;
+  private blockButtons() {
+    const generateBtn = document.querySelector('.control-panel-functional__generate');
+    if (generateBtn) generateBtn.classList.add('control-panel-functional__generate_disabled');
+    const createCarName = this.controlPanel.querySelector('.control-panel-create__name');
+    const createCarColor = this.controlPanel.querySelector('.control-panel-create__color');
+    const buttonCreateCar = this.controlPanel.querySelector('.control-panel-create__crt');
+    const updateCarName = this.controlPanel.querySelector('.control-panel-update__name');
+    const updateCarColor = this.controlPanel.querySelector('.control-panel-update__color');
+    const buttonUpdateCar = this.controlPanel.querySelector('.control-panel-update__upt');
+    this.selectedCar = 0;
+    if (
+      createCarName instanceof HTMLInputElement &&
+      createCarColor instanceof HTMLInputElement &&
+      buttonCreateCar instanceof HTMLButtonElement &&
+      updateCarName instanceof HTMLInputElement &&
+      updateCarColor instanceof HTMLInputElement &&
+      buttonUpdateCar instanceof HTMLButtonElement
+    ) {
+      createCarName.value = '';
+      updateCarName.value = '';
+      createCarColor.value = '#ffffff';
+      updateCarColor.value = '#ffffff';
+      createCarName.classList.add('control-panel-create__name_disabled');
+      createCarColor.classList.add('control-panel-create__color_disabled');
+      buttonCreateCar.classList.add('control-panel-create__crt_disabled');
+      updateCarName.classList.add('control-panel-update__name_disabled');
+      updateCarColor.classList.add('control-panel-update__color_disabled');
+      buttonUpdateCar.classList.add('control-panel-update__upt_disabled');
+    }
+  }
 
+  private unblockButtons() {
+    const generateBtn = document.querySelector('.control-panel-functional__generate');
+    if (generateBtn) generateBtn.classList.remove('control-panel-functional__generate_disabled');
+    const createCarName = this.controlPanel.querySelector('.control-panel-create__name');
+    const createCarColor = this.controlPanel.querySelector('.control-panel-create__color');
+    const buttonCreateCar = this.controlPanel.querySelector('.control-panel-create__crt');
+    if (
+      createCarName instanceof HTMLInputElement &&
+      createCarColor instanceof HTMLInputElement &&
+      buttonCreateCar instanceof HTMLButtonElement
+    ) {
+      createCarName.classList.remove('control-panel-create__name_disabled');
+      createCarColor.classList.remove('control-panel-create__color_disabled');
+      buttonCreateCar.classList.remove('control-panel-create__crt_disabled');
+    }
+  }
+
+  private async race() {
     const carsStartButtons: NodeListOf<HTMLButtonElement> = this.garagePage.querySelectorAll('.track__start');
 
     const promises: Promise<CarWithSpeed>[] = [];
 
     carsStartButtons.forEach((el) => {
-      promises.push(this.driveCar(el));
+      promises.push(this.driveCar(el, true));
     });
 
-    const results = await Promise.allSettled(promises);
+    try {
+      const winner = await Promise.any(promises);
 
-    const winner = results
-      .filter(
-        (el: PromiseSettledResult<CarWithSpeed>): el is PromiseFulfilledResult<CarWithSpeed> =>
-          el.status === 'fulfilled',
-      )
-      .filter((el) => el.value.animation !== -1)
-      .map((el) => el.value)
-      .sort((a, b) => a.animation - b.animation)[0];
-
-    if (winner) {
       const winnerCar = document.getElementById(String(winner.id));
       if (!winnerCar) return;
       const carName = winnerCar.querySelector('.car-controls__name');
@@ -547,7 +608,14 @@ class Garage {
       if (winnerName !== null) this.showModalWinner(winnerName, winner.animation, false);
       this.winner = { id: winner.id, wins: 1, time: Math.trunc(winner.animation / 10) / 100 };
       document.body.dispatchEvent(new Event('createWinner'));
-    } else this.showModalWinner('', -1, true);
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AggregateError') {
+        this.showModalWinner('', -1, true);
+      }
+    }
+
+    const resetButton = document.querySelector('.control-panel-functional__reset');
+    if (resetButton) resetButton.classList.remove('control-panel-functional__reset_disabled');
   }
 
   private showModalWinner(carName: string, time: number, noWinner: boolean) {
@@ -555,25 +623,19 @@ class Garage {
       ? 'All the cars are broken'
       : `${carName} won (${Math.trunc(time / 10) / 100}s)`;
     this.winnerMgs.classList.add('winner-msg_show');
-    setTimeout(() => {
-      this.winnerMgs.classList.remove('winner-msg_show');
-    }, 7000);
   }
 
   private reset() {
-    const cars = this.garagePage.querySelector('.garage-page__cars');
-    if (!cars) return;
-
-    const carsRestartButtons = Array.from(this.garagePage.querySelectorAll('.track__restart')).filter(
-      (el) => !el.classList.contains('track__restart_disabled'),
-    );
+    const carsRestartButtons = Array.from(this.garagePage.querySelectorAll('.track__restart'));
 
     carsRestartButtons.forEach((el) => {
       el.dispatchEvent(new Event('click', { bubbles: true }));
     });
+
+    this.winnerMgs.classList.remove('winner-msg_show');
   }
 
-  private async UpdateGaragePage() {
+  private async updateGaragePage() {
     const { total, cars } = await this.asyncApi.getCars(this.currentPage, MAX_CARS_ON_PAGE);
     const garageTitle = this.garage.querySelector('.garage__title');
     if (garageTitle) garageTitle.textContent = `Garage (${total})`;

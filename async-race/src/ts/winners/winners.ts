@@ -259,6 +259,7 @@ class Winners {
       lastElement += 1;
       if (lastElement === winners.length) this.winnersPages.style.height = 'auto';
     });
+    if (winners.length === 0) this.winnersPages.style.height = 'auto';
   }
 
   public async addWinnerInfo(winner: Winner) {
