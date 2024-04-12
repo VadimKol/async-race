@@ -299,7 +299,7 @@ class Garage {
         default:
       }
     } catch (err) {
-      // continue regardless of error
+      if (!(err instanceof Error && err.message === 'Engine was broken')) throw err;
     }
   }
 
@@ -445,11 +445,9 @@ class Garage {
         returnvalue.id = Number(currentCar.id);
       }
     } catch (err) {
-      if (err instanceof Error) {
-        if (err.name === 'AbortError')
-          this.asyncApi.aborted = this.asyncApi.aborted.filter((el) => el.carId !== Number(currentCar.id));
-        if (err.message === 'Engine was broken') throw new Error('Engine was broken');
-      }
+      if (err instanceof Error && err.name === 'AbortError')
+        this.asyncApi.aborted = this.asyncApi.aborted.filter((el) => el.carId !== Number(currentCar.id));
+      else throw err;
     }
     return returnvalue;
   }
@@ -566,9 +564,8 @@ class Garage {
       this.winner = { id: winner.id, wins: 1, time: Math.trunc(winner.animation / 10) / 100 };
       document.body.dispatchEvent(new Event('createWinner'));
     } catch (err) {
-      if (err instanceof Error && err.name === 'AggregateError') {
-        this.showModalWinner('', -1, true);
-      }
+      if (err instanceof Error && err.name === 'AggregateError') this.showModalWinner('', -1, true);
+      else throw err;
     }
 
     const resetButton = document.querySelector('.control-panel-functional__reset');
