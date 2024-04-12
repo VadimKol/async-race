@@ -299,7 +299,7 @@ class Garage {
         default:
       }
     } catch (err) {
-      if (!(err instanceof Error && err.message === 'Engine was broken')) throw err;
+      if (!(err instanceof Error && err.message === 'Engine was broken')) console.error(err);
     }
   }
 
@@ -565,7 +565,7 @@ class Garage {
       document.body.dispatchEvent(new Event('createWinner'));
     } catch (err) {
       if (err instanceof Error && err.name === 'AggregateError') this.showModalWinner('', -1, true);
-      else throw err;
+      else console.error(err);
     }
 
     const resetButton = document.querySelector('.control-panel-functional__reset');
